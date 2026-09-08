@@ -23,7 +23,6 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="ni.edu.uam.facturacion.controller.ProductoController">
 
-    <!-- Encabezado Superior -->
     <top>
         <VBox style="-fx-background-color: #1e3a5f; -fx-padding: 14 24 14 24;">
             <HBox alignment="CENTER_LEFT" spacing="14">
@@ -52,14 +51,12 @@
         </VBox>
     </top>
 
-    <!-- Contenido Central: Formulario y Tabla -->
     <center>
         <HBox spacing="20">
             <padding>
                 <Insets bottom="16.0" left="20.0" right="20.0" top="16.0"/>
             </padding>
 
-            <!-- Panel Izquierdo: Formulario de Registro -->
             <VBox prefWidth="320.0" spacing="14"
                   style="-fx-background-color: white; -fx-padding: 18; -fx-background-radius: 8; -fx-border-color: #cfd8dc; -fx-border-radius: 8;">
                 <Label text="Nuevo Producto"
@@ -71,35 +68,30 @@
                         <ColumnConstraints hgrow="ALWAYS"/>
                     </columnConstraints>
 
-                    <!-- Código -->
                     <Label text="Código:" GridPane.columnIndex="0" GridPane.rowIndex="0"
                            style="-fx-text-fill: #37474f; -fx-font-weight: bold;"/>
                     <TextField fx:id="txtCodigo" promptText="Ej: PRD-004"
                                GridPane.columnIndex="1" GridPane.rowIndex="0"
                                style="-fx-background-radius: 4; -fx-border-radius: 4;"/>
 
-                    <!-- Nombre -->
                     <Label text="Nombre:" GridPane.columnIndex="0" GridPane.rowIndex="1"
                            style="-fx-text-fill: #37474f; -fx-font-weight: bold;"/>
                     <TextField fx:id="txtNombre" promptText="Nombre del producto"
                                GridPane.columnIndex="1" GridPane.rowIndex="1"
                                style="-fx-background-radius: 4; -fx-border-radius: 4;"/>
 
-                    <!-- Categoría -->
                     <Label text="Categoría:" GridPane.columnIndex="0" GridPane.rowIndex="2"
                            style="-fx-text-fill: #37474f; -fx-font-weight: bold;"/>
                     <ComboBox fx:id="cmbCategoria" maxWidth="Infinity"
                               GridPane.columnIndex="1" GridPane.rowIndex="2"
                               style="-fx-background-radius: 4;"/>
 
-                    <!-- Precio -->
                     <Label text="Precio ($):" GridPane.columnIndex="0" GridPane.rowIndex="3"
                            style="-fx-text-fill: #37474f; -fx-font-weight: bold;"/>
                     <TextField fx:id="txtPrecio" promptText="Ej: 15.50"
                                GridPane.columnIndex="1" GridPane.rowIndex="3"
                                style="-fx-background-radius: 4; -fx-border-radius: 4;"/>
 
-                    <!-- Stock -->
                     <Label text="Stock:" GridPane.columnIndex="0" GridPane.rowIndex="4"
                            style="-fx-text-fill: #37474f; -fx-font-weight: bold;"/>
                     <TextField fx:id="txtStock" promptText="Ej: 20"
@@ -127,7 +119,6 @@
                 </HBox>
             </VBox>
 
-            <!-- Panel Derecho: Tabla de Productos -->
             <VBox spacing="10" HBox.hgrow="ALWAYS"
                   style="-fx-background-color: white; -fx-padding: 18; -fx-background-radius: 8; -fx-border-color: #cfd8dc; -fx-border-radius: 8;">
                 <Label text="Listado de Productos Registrados"
@@ -149,7 +140,6 @@
         </HBox>
     </center>
 
-    <!-- Barra Inferior -->
     <bottom>
         <HBox alignment="CENTER_LEFT"
               style="-fx-background-color: #e0e0e0; -fx-padding: 6 16 6 16;">

@@ -55,7 +55,6 @@ public class ProductoController {
 
     @FXML
     public void initialize() {
-        // Configurar columnas de la tabla mapeando las propiedades de Producto
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
@@ -64,7 +63,6 @@ public class ProductoController {
 
         tblProductos.setItems(listaProductos);
 
-        // Inicializar categorías con Lombok
         Categoria cat1 = new Categoria(1, "Electrónica", true);
         Categoria cat2 = new Categoria(2, "Papelería", true);
         Categoria cat3 = new Categoria(3, "Bebidas", true);
@@ -76,7 +74,6 @@ public class ProductoController {
             cmbCategoria.getSelectionModel().selectFirst();
         }
 
-        // Cargar productos de ejemplo usando el nuevo modelo Lombok y BigDecimal
         listaProductos.add(new Producto(1, "PRD-001", "Laptop HP 15", cat1, new BigDecimal("750.00"), 10, null, true));
         listaProductos.add(new Producto(2, "PRD-002", "Cuaderno Espiral Universitario", cat2, new BigDecimal("2.50"), 50, null, true));
         listaProductos.add(new Producto(3, "PRD-003", "Café Helado 250ml", cat3, new BigDecimal("1.80"), 25, null, true));
@@ -110,7 +107,6 @@ public class ProductoController {
             return;
         }
 
-        // Comprobar si el código ya existe
         boolean existe = listaProductos.stream().anyMatch(p -> p.getCodigo().equalsIgnoreCase(codigo));
         if (existe) {
             mostrarMensaje("Ya existe un producto con el código: " + codigo, true);

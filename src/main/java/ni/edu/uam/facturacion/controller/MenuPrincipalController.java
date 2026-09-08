@@ -9,7 +9,6 @@ public class MenuPrincipalController {
 
     @FXML
     public void initialize() {
-        // Inicialización de componentes si es necesario
     }
 
     @FXML
