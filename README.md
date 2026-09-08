@@ -8,7 +8,8 @@ Proyecto modular en **JavaFX 21** administrado con **Maven**, desarrollado bajo 
 
 - **Java Development Kit (JDK):** OpenJDK / Eclipse Temurin `21.0.12.1` LTS o superior.
 - **Apache Maven:** 3.8+ (probado con Maven 3.9.16).
-- **IDE Recomendado:** IntelliJ IDEA, Eclipse o VS Code con extensión JavaFX.
+- **Lombok:** 1.18.48 (con Annotation Processing activado en el IDE).
+- **IDE Recomendado:** IntelliJ IDEA, Eclipse o VS Code.
 
 ---
 
@@ -47,29 +48,25 @@ sistema-facturacion-javafx/
             └── cerrar.png
 ```
 
-> **Nota sobre los recursos:** Los archivos `.fxml`, imágenes e iconos se encuentran organizados dentro de subdirectorios en `src/main/resources/ni/edu/uam/facturacion/`. Maven los empaqueta automáticamente en el classpath de la aplicación para su carga dinámica.
+---
+
+## 📦 Modelos de Dominio (Lombok)
+
+- **`Categoria`**: Manejo de categorías (`id`, `nombre`, `activa`).
+- **`Producto`**: Productos con alta precisión monetaria (`id`, `codigo`, `nombre`, `categoria`, `precioVenta: BigDecimal`, `existencia: int`, `rutaImagen`, `activo`).
+- **`Cargo`**: Cargos de la empresa (`id`, `nombre`, `descripcion`).
+- **`Empleado`**: Registro de empleados (`id`, `nombres`, `apellidos`, `cargo`, `fechaContratacion: LocalDate`, `activo`).
 
 ---
 
 ## 🚀 Compilación y Ejecución
 
 ### 1. Compilar el proyecto
-Para limpiar el directorio de salida y compilar las clases del módulo:
 ```bash
 mvn clean compile
 ```
 
 ### 2. Ejecutar la aplicación
-Para iniciar la interfaz gráfica con el plugin de JavaFX:
 ```bash
 mvn javafx:run
 ```
-
----
-
-## 📦 Módulos y Paquetes
-
-- **`application`**: Contiene la clase de arranque `FacturacionApplication` que extiende `javafx.application.Application`.
-- **`controller`**: Controladores de eventos e interfaz para las vistas FXML (`MenuPrincipalController`, `ProductoController`).
-- **`model`**: Clases de dominio del sistema: `Categoria`, `Producto`, `Cargo` y `Empleado`.
-- **`util`**: Utilidades generales como `SceneManager` para la navegación centralizada entre vistas.
