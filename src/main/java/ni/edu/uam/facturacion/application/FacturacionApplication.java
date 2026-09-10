@@ -1,15 +1,28 @@
 package ni.edu.uam.facturacion.application;
 
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
-import ni.edu.uam.facturacion.util.SceneManager;
+
+import java.io.InputStream;
 
 public class FacturacionApplication extends Application {
-
     @Override
-    public void start(Stage primaryStage) {
-        SceneManager.setStage(primaryStage);
-        SceneManager.cambiarEscena("menu-principal.fxml", "Sistema de Facturación - UAM");
+    public void start(Stage stage) throws Exception {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(
+            "/ni/edu/uam/facturacion/fxml/menu-principal.fxml"));
+        stage.setTitle("Sistema de facturación");
+        stage.setScene(new Scene(loader.load(), 900, 600));
+
+        // Configurar icono de la aplicación si está disponible
+        InputStream logoStream = getClass().getResourceAsStream("/ni/edu/uam/facturacion/images/logo.png");
+        if (logoStream != null) {
+            stage.getIcons().add(new Image(logoStream));
+        }
+
+        stage.show();
     }
 
     public static void main(String[] args) {
