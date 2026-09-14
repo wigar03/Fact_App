@@ -34,9 +34,6 @@ public class MenuPrincipalController {
     private Button btnCargos;
 
     @FXML
-    private Button btnSalir;
-
-    @FXML
     private void abrirProductos() {
         try {
             SceneManager.abrirVentana(
