@@ -89,6 +89,14 @@ public class ProductoController {
         colActivo.setCellValueFactory(new PropertyValueFactory<>("activo"));
     }
 
+    public ObservableList<Producto> getProductos() {
+        return productos;
+    }
+
+    public ComboBox<Categoria> getCmbCategoria() {
+        return cmbCategoria;
+    }
+
     @FXML
     private void seleccionarImagen() {
         FileChooser chooser = new FileChooser();

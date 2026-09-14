@@ -50,6 +50,10 @@ public class CargoController {
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
     }
 
+    public ObservableList<Cargo> getCargos() {
+        return cargos;
+    }
+
     @FXML
     private void guardar() {
         if (txtNombre.getText() == null || txtNombre.getText().isBlank()) {

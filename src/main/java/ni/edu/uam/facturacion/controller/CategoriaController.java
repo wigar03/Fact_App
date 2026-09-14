@@ -51,6 +51,10 @@ public class CategoriaController {
         colActiva.setCellValueFactory(new PropertyValueFactory<>("activa"));
     }
 
+    public ObservableList<Categoria> getCategorias() {
+        return categorias;
+    }
+
     @FXML
     private void guardar() {
         if (txtNombre.getText() == null || txtNombre.getText().isBlank()) {

@@ -6,6 +6,7 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.ToolBar?>
@@ -38,7 +39,20 @@
             </MenuBar>
             <ToolBar style="-fx-background-color: #ffffff; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0; -fx-padding: 6px 12px;">
               <items>
-                <Button fx:id="btnProductos" mnemonicParsing="false" onAction="#abrirProductos" style="-fx-background-color: #f1f5f9; -fx-cursor: hand; -fx-background-radius: 6px; -fx-padding: 6px 8px;">
+                <Button fx:id="btnHome" mnemonicParsing="false" onAction="#mostrarInicio" style="-fx-background-color: #dbeafe; -fx-border-color: #2563eb; -fx-border-width: 1.5px; -fx-background-radius: 6px; -fx-border-radius: 6px; -fx-padding: 4.5px 6.5px; -fx-cursor: hand;">
+                     <graphic>
+                        <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../icons/home.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <tooltip>
+                        <Tooltip text="Inicio: Dashboard general" />
+                     </tooltip>
+                  </Button>
+                  <Separator orientation="VERTICAL" />
+                  <Button fx:id="btnProductos" mnemonicParsing="false" onAction="#abrirProductos" style="-fx-background-color: #f1f5f9; -fx-cursor: hand; -fx-background-radius: 6px; -fx-padding: 6px 8px;">
                      <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
@@ -80,15 +94,301 @@
       </VBox>
    </top>
    <center>
-      <VBox fx:id="vistaInicio" alignment="CENTER" BorderPane.alignment="CENTER">
-         <children>
-            <ImageView fitHeight="180.0" fitWidth="180.0" pickOnBounds="true" preserveRatio="true">
-               <image>
-                  <Image url="@../images/logo.png" />
-               </image>
-            </ImageView>
-         </children>
-      </VBox>
+      <ScrollPane fx:id="vistaInicio" fitToWidth="true" style="-fx-background: #f8fafc; -fx-background-color: #f8fafc; -fx-border-color: transparent;" BorderPane.alignment="CENTER">
+         <content>
+            <VBox alignment="TOP_CENTER" spacing="20.0">
+               <padding>
+                  <Insets bottom="24.0" left="28.0" right="28.0" top="20.0" />
+               </padding>
+               <children>
+                  <!-- Header del Dashboard -->
+                  <HBox alignment="CENTER_LEFT" spacing="16.0" style="-fx-background-color: #ffffff; -fx-padding: 16px 20px; -fx-background-radius: 10px; -fx-border-color: #e2e8f0; -fx-border-radius: 10px; -fx-border-width: 1px;">
+                     <children>
+                        <ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../images/logo.png" />
+                           </image>
+                        </ImageView>
+                        <VBox spacing="2.0">
+                           <children>
+                              <Label text="Panel de Control General" textFill="#0f172a">
+                                 <font>
+                                    <Font name="System Bold" size="20.0" />
+                                 </font>
+                              </Label>
+                              <Label text="Resumen ejecutivo del catálogo, inventario y estructura operativa" textFill="#64748b">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </VBox>
+                        <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label style="-fx-background-color: #f1f5f9; -fx-text-fill: #475569; -fx-padding: 6 12; -fx-background-radius: 20; -fx-border-color: #cbd5e1; -fx-border-radius: 20;" text="UAM Facturación 2026">
+                                 <font>
+                                    <Font name="System Bold" size="11.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
+                     </children>
+                  </HBox>
+
+                  <!-- Fila de Tarjetas Resumen (KPI Cards) -->
+                  <HBox alignment="CENTER" spacing="18.0">
+                     <children>
+                        <!-- Tarjeta Productos -->
+                        <VBox HBox.hgrow="ALWAYS" spacing="10.0" style="-fx-background-color: #ffffff; -fx-padding: 18px; -fx-background-radius: 10px; -fx-border-color: #e2e8f0; -fx-border-radius: 10px; -fx-border-width: 1px;">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                 <children>
+                                    <ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../images/products-dashboard.png" />
+                                       </image>
+                                    </ImageView>
+                                    <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-background-color: #e0f2fe; -fx-text-fill: #0284c7; -fx-padding: 2 8; -fx-background-radius: 4;" text="INVENTARIO">
+                                             <font>
+                                                <Font name="System Bold" size="10.0" />
+                                             </font>
+                                          </Label>
+                                          <Label text="Productos" textFill="#0f172a">
+                                             <font>
+                                                <Font name="System Bold" size="15.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              <Label fx:id="lblTotalProductos" text="0" textFill="#0284c7">
+                                 <font>
+                                    <Font name="System Bold" size="28.0" />
+                                 </font>
+                              </Label>
+                              <Label fx:id="lblDetalleProductos" text="0 unidades en existencias" textFill="#64748b">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Label>
+                              <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#abrirProductos" style="-fx-background-color: #f0f9ff; -fx-text-fill: #0284c7; -fx-font-weight: bold; -fx-cursor: hand; -fx-border-color: #bae6fd; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 6px;" text="Gestionar Productos →" />
+                           </children>
+                        </VBox>
+
+                        <!-- Tarjeta Categorías -->
+                        <VBox HBox.hgrow="ALWAYS" spacing="10.0" style="-fx-background-color: #ffffff; -fx-padding: 18px; -fx-background-radius: 10px; -fx-border-color: #e2e8f0; -fx-border-radius: 10px; -fx-border-width: 1px;">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                 <children>
+                                    <ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../images/categories-dashboard.png" />
+                                       </image>
+                                    </ImageView>
+                                    <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-background-color: #fef3c7; -fx-text-fill: #d97706; -fx-padding: 2 8; -fx-background-radius: 4;" text="CLASIFICACIÓN">
+                                             <font>
+                                                <Font name="System Bold" size="10.0" />
+                                             </font>
+                                          </Label>
+                                          <Label text="Categorías" textFill="#0f172a">
+                                             <font>
+                                                <Font name="System Bold" size="15.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              <Label fx:id="lblTotalCategorias" text="3" textFill="#d97706">
+                                 <font>
+                                    <Font name="System Bold" size="28.0" />
+                                 </font>
+                              </Label>
+                              <Label fx:id="lblDetalleCategorias" text="Alimentos, Bebidas, Limpieza" textFill="#64748b">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Label>
+                              <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#abrirCategorias" style="-fx-background-color: #fffbeb; -fx-text-fill: #d97706; -fx-font-weight: bold; -fx-cursor: hand; -fx-border-color: #fde68a; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 6px;" text="Gestionar Categorías →" />
+                           </children>
+                        </VBox>
+
+                        <!-- Tarjeta Cargos -->
+                        <VBox HBox.hgrow="ALWAYS" spacing="10.0" style="-fx-background-color: #ffffff; -fx-padding: 18px; -fx-background-radius: 10px; -fx-border-color: #e2e8f0; -fx-border-radius: 10px; -fx-border-width: 1px;">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                 <children>
+                                    <ImageView fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../images/cargos-dashboard.png" />
+                                       </image>
+                                    </ImageView>
+                                    <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-background-color: #f3e8ff; -fx-text-fill: #7e22ce; -fx-padding: 2 8; -fx-background-radius: 4;" text="PERSONAL">
+                                             <font>
+                                                <Font name="System Bold" size="10.0" />
+                                             </font>
+                                          </Label>
+                                          <Label text="Cargos" textFill="#0f172a">
+                                             <font>
+                                                <Font name="System Bold" size="15.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              <Label fx:id="lblTotalCargos" text="3" textFill="#7e22ce">
+                                 <font>
+                                    <Font name="System Bold" size="28.0" />
+                                 </font>
+                              </Label>
+                              <Label fx:id="lblDetalleCargos" text="Roles de administración y operación" textFill="#64748b">
+                                 <font>
+                                    <Font size="12.0" />
+                                 </font>
+                              </Label>
+                              <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#abrirCargos" style="-fx-background-color: #faf5ff; -fx-text-fill: #7e22ce; -fx-font-weight: bold; -fx-cursor: hand; -fx-border-color: #e9d5ff; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 6px;" text="Gestionar Cargos →" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+
+                  <!-- Panel Inferior: Valorización y Acciones Rápidas -->
+                  <HBox spacing="18.0">
+                     <children>
+                        <!-- Tarjeta de Valorización y Control de Stock -->
+                        <VBox HBox.hgrow="ALWAYS" spacing="12.0" style="-fx-background-color: #ffffff; -fx-padding: 16px 20px; -fx-background-radius: 10px; -fx-border-color: #e2e8f0; -fx-border-radius: 10px; -fx-border-width: 1px;">
+                           <children>
+                              <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                 <children>
+                                    <Label text="Balance y Control de Inventario" textFill="#0f172a">
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Label>
+                                    <Label style="-fx-background-color: #dcfce7; -fx-text-fill: #15803d; -fx-padding: 2 6; -fx-background-radius: 4;" text="TIEMPO REAL">
+                                       <font>
+                                          <Font name="System Bold" size="9.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </HBox>
+                              <HBox alignment="CENTER_LEFT" spacing="20.0">
+                                 <children>
+                                    <VBox spacing="3.0">
+                                       <children>
+                                          <Label text="VALORIZACIÓN TOTAL" textFill="#64748b">
+                                             <font>
+                                                <Font name="System Bold" size="10.0" />
+                                             </font>
+                                          </Label>
+                                          <Label fx:id="lblValorInventario" text="C$ 0.00" textFill="#15803d">
+                                             <font>
+                                                <Font name="System Bold" size="20.0" />
+                                             </font>
+                                          </Label>
+                                          <Label text="Existencias × precio venta" textFill="#94a3b8">
+                                             <font>
+                                                <Font size="11.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </VBox>
+                                    <Separator orientation="VERTICAL" />
+                                    <VBox spacing="3.0">
+                                       <children>
+                                          <Label text="UNIDADES EN STOCK" textFill="#64748b">
+                                             <font>
+                                                <Font name="System Bold" size="10.0" />
+                                             </font>
+                                          </Label>
+                                          <Label fx:id="lblTotalUnidades" text="0 unidades" textFill="#0f172a">
+                                             <font>
+                                                <Font name="System Bold" size="20.0" />
+                                             </font>
+                                          </Label>
+                                          <Label text="En almacén general" textFill="#94a3b8">
+                                             <font>
+                                                <Font size="11.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </VBox>
+                                    <Separator orientation="VERTICAL" />
+                                    <VBox spacing="3.0">
+                                       <children>
+                                          <Label text="ALERTA DE EXISTENCIAS" textFill="#64748b">
+                                             <font>
+                                                <Font name="System Bold" size="10.0" />
+                                             </font>
+                                          </Label>
+                                          <Label fx:id="lblAlertaStock" text="● Sin productos" textFill="#64748b">
+                                             <font>
+                                                <Font name="System Bold" size="14.0" />
+                                             </font>
+                                          </Label>
+                                          <Label fx:id="lblDetalleAlerta" text="Inventario vacío" textFill="#64748b">
+                                             <font>
+                                                <Font size="11.0" />
+                                             </font>
+                                          </Label>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+
+                        <!-- Tarjeta de Acciones Rápidas -->
+                        <VBox prefWidth="320.0" spacing="8.0" style="-fx-background-color: #ffffff; -fx-padding: 16px 20px; -fx-background-radius: 10px; -fx-border-color: #e2e8f0; -fx-border-radius: 10px; -fx-border-width: 1px;">
+                           <children>
+                              <Label text="Acciones Rápidas" textFill="#0f172a">
+                                 <font>
+                                    <Font name="System Bold" size="14.0" />
+                                 </font>
+                              </Label>
+                              <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#abrirProductos" style="-fx-background-color: #f0f9ff; -fx-text-fill: #0369a1; -fx-font-weight: bold; -fx-cursor: hand; -fx-border-color: #bae6fd; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 6px 10px; -fx-alignment: CENTER_LEFT;" text="+ Registrar Nuevo Producto">
+                                 <graphic>
+                                    <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../icons/agregar.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                              <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#abrirCategorias" style="-fx-background-color: #fffbeb; -fx-text-fill: #b45309; -fx-font-weight: bold; -fx-cursor: hand; -fx-border-color: #fde68a; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 6px 10px; -fx-alignment: CENTER_LEFT;" text="+ Crear Nueva Categoría">
+                                 <graphic>
+                                    <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../icons/categories.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                              <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#abrirCargos" style="-fx-background-color: #faf5ff; -fx-text-fill: #7e22ce; -fx-font-weight: bold; -fx-cursor: hand; -fx-border-color: #e9d5ff; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 6px 10px; -fx-alignment: CENTER_LEFT;" text="+ Definir Nuevo Cargo">
+                                 <graphic>
+                                    <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../icons/cargos.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
    </center>
    <bottom>
       <HBox alignment="CENTER_LEFT" style="-fx-background-color: #f1f5f9; -fx-padding: 8px 16px; -fx-border-color: #e2e8f0; -fx-border-width: 1 0 0 0;" BorderPane.alignment="CENTER">
