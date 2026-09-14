@@ -75,9 +75,22 @@ public class CargoController {
         limpiar();
     }
 
+    private Runnable alCerrar;
+
+    public void setAlCerrar(Runnable alCerrar) {
+        this.alCerrar = alCerrar;
+    }
+
     @FXML
     private void cerrar() {
-        ((Stage) txtNombre.getScene().getWindow()).close();
+        if (alCerrar != null) {
+            alCerrar.run();
+        } else {
+            Stage stage = (Stage) txtNombre.getScene().getWindow();
+            if (stage != null) {
+                stage.close();
+            }
+        }
     }
 
     private void limpiar() {

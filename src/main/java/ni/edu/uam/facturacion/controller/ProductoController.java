@@ -141,9 +141,22 @@ public class ProductoController {
         }
     }
 
+    private Runnable alCerrar;
+
+    public void setAlCerrar(Runnable alCerrar) {
+        this.alCerrar = alCerrar;
+    }
+
     @FXML
     private void cerrar() {
-        ((Stage) txtCodigo.getScene().getWindow()).close();
+        if (alCerrar != null) {
+            alCerrar.run();
+        } else {
+            Stage stage = (Stage) txtCodigo.getScene().getWindow();
+            if (stage != null) {
+                stage.close();
+            }
+        }
     }
 
     private void limpiar() {

@@ -14,7 +14,9 @@ public class FacturacionApplication extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
             "/ni/edu/uam/facturacion/fxml/menu-principal.fxml"));
         stage.setTitle("Sistema de facturación");
-        stage.setScene(new Scene(loader.load(), 900, 600));
+        stage.setScene(new Scene(loader.load(), 980, 640));
+        stage.setMinWidth(950);
+        stage.setMinHeight(620);
 
         // Configurar icono de la aplicación si está disponible
         InputStream logoStream = getClass().getResourceAsStream("/ni/edu/uam/facturacion/images/logo.png");

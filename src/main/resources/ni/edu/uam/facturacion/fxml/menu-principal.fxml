@@ -17,7 +17,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="620.0" prefWidth="960.0" style="-fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ni.edu.uam.facturacion.controller.MenuPrincipalController">
+<BorderPane fx:id="rootPane" prefHeight="640.0" prefWidth="980.0" style="-fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ni.edu.uam.facturacion.controller.MenuPrincipalController">
    <top>
       <VBox BorderPane.alignment="CENTER">
          <children>
@@ -25,6 +25,8 @@
               <menus>
                 <Menu mnemonicParsing="false" text="Catálogos">
                   <items>
+                    <MenuItem fx:id="mnuInicio" mnemonicParsing="false" onAction="#mostrarInicio" text="Inicio" />
+                    <SeparatorMenuItem mnemonicParsing="false" />
                     <MenuItem fx:id="mnuProductos" mnemonicParsing="false" onAction="#abrirProductos" text="Productos" />
                     <MenuItem fx:id="mnuCategorias" mnemonicParsing="false" onAction="#abrirCategorias" text="Categorías" />
                     <MenuItem fx:id="mnuCargos" mnemonicParsing="false" onAction="#abrirCargos" text="Cargos" />
@@ -78,7 +80,7 @@
       </VBox>
    </top>
    <center>
-      <VBox alignment="CENTER" BorderPane.alignment="CENTER">
+      <VBox fx:id="vistaInicio" alignment="CENTER" BorderPane.alignment="CENTER">
          <children>
             <ImageView fitHeight="180.0" fitWidth="180.0" pickOnBounds="true" preserveRatio="true">
                <image>
@@ -91,7 +93,7 @@
    <bottom>
       <HBox alignment="CENTER_LEFT" style="-fx-background-color: #f1f5f9; -fx-padding: 8px 16px; -fx-border-color: #e2e8f0; -fx-border-width: 1 0 0 0;" BorderPane.alignment="CENTER">
          <children>
-            <Label text="● Sistema listo y en línea" textFill="#15803d">
+            <Label fx:id="lblEstado" text="● Sistema listo y en línea" textFill="#15803d">
                <font>
                   <Font size="11.0" />
                </font>
