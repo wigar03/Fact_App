@@ -9,6 +9,7 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
@@ -35,26 +36,54 @@
             </MenuBar>
             <ToolBar style="-fx-background-color: #ffffff; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0; -fx-padding: 6px 12px;">
               <items>
-                <Button fx:id="btnProductos" mnemonicParsing="false" onAction="#abrirProductos" style="-fx-background-color: #f1f5f9; -fx-text-fill: #1e293b; -fx-font-weight: bold; -fx-cursor: hand;" text="Productos">
+                <Button fx:id="btnProductos" mnemonicParsing="false" onAction="#abrirProductos" style="-fx-background-color: #f1f5f9; -fx-cursor: hand; -fx-background-radius: 6px; -fx-padding: 6px 8px;">
                      <graphic>
-                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                        <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../icons/agregar.png" />
+                              <Image url="@../icons/products.png" />
                            </image>
                         </ImageView>
                      </graphic>
+                     <tooltip>
+                        <Tooltip text="Gestión de productos: catálogo, existencias y precios" />
+                     </tooltip>
                   </Button>
-                  <Button fx:id="btnCategorias" mnemonicParsing="false" onAction="#abrirCategorias" style="-fx-background-color: #f1f5f9; -fx-text-fill: #1e293b; -fx-cursor: hand;" text="Categorías" />
-                  <Button fx:id="btnCargos" mnemonicParsing="false" onAction="#abrirCargos" style="-fx-background-color: #f1f5f9; -fx-text-fill: #1e293b; -fx-cursor: hand;" text="Cargos" />
-                  <Separator orientation="VERTICAL" />
-                  <Button fx:id="btnSalir" mnemonicParsing="false" onAction="#salir" style="-fx-background-color: #fef2f2; -fx-text-fill: #dc2626; -fx-cursor: hand;" text="Salir">
+                  <Button fx:id="btnCategorias" mnemonicParsing="false" onAction="#abrirCategorias" style="-fx-background-color: #f1f5f9; -fx-cursor: hand; -fx-background-radius: 6px; -fx-padding: 6px 8px;">
                      <graphic>
-                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                        <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../icons/categories.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <tooltip>
+                        <Tooltip text="Gestión de categorías: clasificación y familias de productos" />
+                     </tooltip>
+                  </Button>
+                  <Button fx:id="btnCargos" mnemonicParsing="false" onAction="#abrirCargos" style="-fx-background-color: #f1f5f9; -fx-cursor: hand; -fx-background-radius: 6px; -fx-padding: 6px 8px;">
+                     <graphic>
+                        <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../icons/cargos.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <tooltip>
+                        <Tooltip text="Gestión de cargos: administración de puestos y roles" />
+                     </tooltip>
+                  </Button>
+                  <Separator orientation="VERTICAL" />
+                  <Button fx:id="btnSalir" mnemonicParsing="false" onAction="#salir" style="-fx-background-color: #fef2f2; -fx-cursor: hand; -fx-background-radius: 6px; -fx-padding: 6px 8px;">
+                     <graphic>
+                        <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
                               <Image url="@../icons/cerrar.png" />
                            </image>
                         </ImageView>
                      </graphic>
+                     <tooltip>
+                        <Tooltip text="Salir: cerrar la aplicación" />
+                     </tooltip>
                   </Button>
               </items>
             </ToolBar>
