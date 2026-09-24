@@ -5,12 +5,20 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import ni.edu.uam.facturacion.util.DatabaseConnection;
 
 import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public class FacturacionApplication extends Application {
     @Override
     public void start(Stage stage) throws Exception {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            System.out.println("✅ Conectado a la base de datos al iniciar la app.");
+        } catch (SQLException e) {
+            System.err.println("❌ No se pudo conectar a la base de datos: " + e.getMessage());
+        }
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
             "/ni/edu/uam/facturacion/fxml/menu-principal.fxml"));
         stage.setTitle("Sistema de facturación");

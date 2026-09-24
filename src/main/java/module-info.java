@@ -2,6 +2,7 @@ module ni.edu.uam.facturacion {
     requires javafx.controls;
     requires javafx.fxml;
     requires static lombok;
+    requires java.sql;
 
     exports ni.edu.uam.facturacion.application;
     exports ni.edu.uam.facturacion.controller;
