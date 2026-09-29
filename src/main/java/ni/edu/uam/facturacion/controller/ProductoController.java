@@ -3,10 +3,12 @@ package ni.edu.uam.facturacion.controller;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import ni.edu.uam.facturacion.DAO.CategoriaDAO;
@@ -38,10 +40,16 @@ public class ProductoController {
     private CheckBox chkActivo;
 
     @FXML
+    private Label lblSinImagen;
+
+    @FXML
     private ImageView imgProducto;
 
     @FXML
     private TableView<Producto> tblProductos;
+
+    @FXML
+    private TableColumn<Producto, String> colImagen;
 
     @FXML
     private TableColumn<Producto, String> colCodigo;
@@ -65,6 +73,12 @@ public class ProductoController {
     private Button btnImagen;
 
     @FXML
+    private Button btnQuitarImagen;
+
+    @FXML
+    private Button btnNuevo;
+
+    @FXML
     private Button btnGuardar;
 
     @FXML
@@ -72,13 +86,52 @@ public class ProductoController {
 
     private final ObservableList<Producto> productos = FXCollections.observableArrayList();
     private String rutaImagen;
+    private Producto productoSeleccionado;
     private final ProductoDAO productoDAO = new ProductoDAO();
     private final CategoriaDAO categoriaDAO = new CategoriaDAO();
 
     @FXML
     private void initialize() {
         tblProductos.setItems(productos);
+        tblProductos.setFixedCellSize(46.0);
         chkActivo.setSelected(true);
+
+        colImagen.setCellValueFactory(new PropertyValueFactory<>("rutaImagen"));
+        colImagen.setCellFactory(col -> new TableCell<>() {
+            private final ImageView imageView = new ImageView();
+            private final Rectangle clip = new Rectangle(36, 36);
+
+            {
+                imageView.setFitWidth(36);
+                imageView.setFitHeight(36);
+                imageView.setPreserveRatio(true);
+                imageView.setSmooth(true);
+                clip.setArcWidth(6);
+                clip.setArcHeight(6);
+                imageView.setClip(clip);
+                setAlignment(Pos.CENTER);
+            }
+
+            @Override
+            protected void updateItem(String ruta, boolean empty) {
+                super.updateItem(ruta, empty);
+                if (empty || ruta == null || ruta.isBlank()) {
+                    setGraphic(null);
+                    setText(empty ? null : "—");
+                } else {
+                    Image img = cargarImagenSegura(ruta, 36, 36);
+                    if (img != null && !img.isError()) {
+                        imageView.setImage(img);
+                        setGraphic(imageView);
+                        setText(null);
+                    } else {
+                        imageView.setImage(null);
+                        setGraphic(null);
+                        setText("—");
+                    }
+                }
+            }
+        });
 
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
@@ -87,8 +140,15 @@ public class ProductoController {
         colExistencia.setCellValueFactory(new PropertyValueFactory<>("existencia"));
         colActivo.setCellValueFactory(new PropertyValueFactory<>("activo"));
 
+        tblProductos.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                cargarDetalle(newVal);
+            }
+        });
+
         cargarCategorias();
         cargarProductos();
+        actualizarVistaPreviaImagen(null);
     }
 
     public void cargarCategorias() {
@@ -107,6 +167,65 @@ public class ProductoController {
         return cmbCategoria;
     }
 
+    private void cargarDetalle(Producto p) {
+        if (p == null) return;
+        productoSeleccionado = p;
+        txtCodigo.setText(p.getCodigo());
+        txtNombre.setText(p.getNombre());
+
+        if (p.getCategoria() != null && p.getCategoria().getId() != null) {
+            for (Categoria cat : cmbCategoria.getItems()) {
+                if (cat.getId() != null && cat.getId().equals(p.getCategoria().getId())) {
+                    cmbCategoria.setValue(cat);
+                    break;
+                }
+            }
+        } else {
+            cmbCategoria.getSelectionModel().clearSelection();
+        }
+
+        txtPrecio.setText(p.getPrecioVenta() != null ? p.getPrecioVenta().toPlainString() : "");
+        txtExistencia.setText(String.valueOf(p.getExistencia()));
+        chkActivo.setSelected(p.isActivo());
+
+        rutaImagen = p.getRutaImagen();
+        actualizarVistaPreviaImagen(rutaImagen);
+    }
+
+    private void actualizarVistaPreviaImagen(String ruta) {
+        if (ruta != null && !ruta.isBlank()) {
+            Image img = cargarImagenSegura(ruta, 96, 96);
+            if (img != null && !img.isError()) {
+                imgProducto.setImage(img);
+                if (lblSinImagen != null) lblSinImagen.setVisible(false);
+                return;
+            }
+        }
+        imgProducto.setImage(null);
+        if (lblSinImagen != null) lblSinImagen.setVisible(true);
+    }
+
+    private Image cargarImagenSegura(String ruta, double w, double h) {
+        if (ruta == null || ruta.isBlank()) {
+            return null;
+        }
+        try {
+            String url = ruta.trim();
+            if (!url.startsWith("file:") && !url.startsWith("http:") && !url.startsWith("https:")) {
+                File f = new File(url);
+                if (f.exists()) {
+                    url = f.toURI().toString();
+                } else {
+                    return null;
+                }
+            }
+            Image img = new Image(url, w, h, true, true, false);
+            return img.isError() ? null : img;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @FXML
     private void seleccionarImagen() {
         FileChooser chooser = new FileChooser();
@@ -116,8 +235,14 @@ public class ProductoController {
         File archivo = chooser.showOpenDialog(txtCodigo.getScene().getWindow());
         if (archivo != null) {
             rutaImagen = archivo.toURI().toString();
-            imgProducto.setImage(new Image(rutaImagen));
+            actualizarVistaPreviaImagen(rutaImagen);
         }
+    }
+
+    @FXML
+    private void quitarImagen() {
+        rutaImagen = null;
+        actualizarVistaPreviaImagen(null);
     }
 
     @FXML
@@ -146,23 +271,44 @@ public class ProductoController {
                 return;
             }
 
-            Producto nuevo = new Producto(
-                null,
-                txtCodigo.getText().trim(),
-                txtNombre.getText().trim(),
-                cmbCategoria.getValue(),
-                precio,
-                existencia,
-                rutaImagen,
-                chkActivo.isSelected()
-            );
+            if (productoSeleccionado != null && productoSeleccionado.getId() != null) {
+                Producto actualizado = new Producto(
+                    productoSeleccionado.getId(),
+                    txtCodigo.getText().trim(),
+                    txtNombre.getText().trim(),
+                    cmbCategoria.getValue(),
+                    precio,
+                    existencia,
+                    rutaImagen,
+                    chkActivo.isSelected()
+                );
 
-            if (productoDAO.crear(nuevo)) {
-                cargarProductos();
-                mensaje(Alert.AlertType.INFORMATION, "Producto guardado correctamente en la base de datos.");
-                limpiar();
+                if (productoDAO.actualizar(actualizado)) {
+                    cargarProductos();
+                    mensaje(Alert.AlertType.INFORMATION, "Producto actualizado correctamente en la base de datos.");
+                    limpiar();
+                } else {
+                    mensaje(Alert.AlertType.ERROR, "No se pudo actualizar el producto en la base de datos.");
+                }
             } else {
-                mensaje(Alert.AlertType.ERROR, "No se pudo guardar el producto en la base de datos.\nVerifique que el código no esté duplicado.");
+                Producto nuevo = new Producto(
+                    null,
+                    txtCodigo.getText().trim(),
+                    txtNombre.getText().trim(),
+                    cmbCategoria.getValue(),
+                    precio,
+                    existencia,
+                    rutaImagen,
+                    chkActivo.isSelected()
+                );
+
+                if (productoDAO.crear(nuevo)) {
+                    cargarProductos();
+                    mensaje(Alert.AlertType.INFORMATION, "Producto guardado correctamente en la base de datos.");
+                    limpiar();
+                } else {
+                    mensaje(Alert.AlertType.ERROR, "No se pudo guardar el producto en la base de datos.\nVerifique que el código no esté duplicado.");
+                }
             }
         } catch (NumberFormatException e) {
             mensaje(Alert.AlertType.ERROR, "Precio o existencia no válidos.");
@@ -187,15 +333,18 @@ public class ProductoController {
         }
     }
 
+    @FXML
     private void limpiar() {
+        productoSeleccionado = null;
+        tblProductos.getSelectionModel().clearSelection();
         txtCodigo.clear();
         txtNombre.clear();
         txtPrecio.clear();
         txtExistencia.clear();
         cmbCategoria.getSelectionModel().clearSelection();
         chkActivo.setSelected(true);
-        imgProducto.setImage(null);
         rutaImagen = null;
+        actualizarVistaPreviaImagen(null);
     }
 
     private void mensaje(Alert.AlertType tipo, String texto) {
