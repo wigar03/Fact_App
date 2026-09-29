@@ -4,10 +4,12 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import ni.edu.uam.facturacion.model.Categoria;
+import ni.edu.uam.facturacion.util.CRUD;
 import ni.edu.uam.facturacion.util.DatabaseConnection;
 
-public class CategoriaDAO {
+public class CategoriaDAO implements CRUD<Categoria, Integer> {
 
+    @Override
     public List<Categoria> findAll() {
         var categorias = new ArrayList<Categoria>();
 
@@ -34,7 +36,8 @@ public class CategoriaDAO {
         return categorias;
     }
 
-    public Categoria findById(int id) {
+    @Override
+    public Categoria findById(Integer id) {
         var sql = "SELECT id, nombre, activa "
                 + "FROM categoria "
                 + "WHERE id = ?";
@@ -60,6 +63,7 @@ public class CategoriaDAO {
         return null;
     }
 
+    @Override
     public boolean crear(Categoria cat) {
         var sql = "INSERT INTO categoria (nombre, activa) "
                 + "VALUES (?, ?)";
@@ -78,6 +82,7 @@ public class CategoriaDAO {
         }
     }
 
+    @Override
     public boolean actualizar(Categoria cat) {
         var sql = "UPDATE categoria SET nombre = ?, activa = ? "
                 + "WHERE id = ?";
@@ -97,7 +102,8 @@ public class CategoriaDAO {
         }
     }
 
-    public boolean eliminar(int id) {
+    @Override
+    public boolean eliminar(Integer id) {
         var sql = "DELETE FROM categoria WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();

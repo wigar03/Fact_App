@@ -8,6 +8,7 @@ module ni.edu.uam.facturacion {
     exports ni.edu.uam.facturacion.controller;
     exports ni.edu.uam.facturacion.model;
     exports ni.edu.uam.facturacion.util;
+    exports ni.edu.uam.facturacion.DAO;
 
     opens ni.edu.uam.facturacion.controller to javafx.fxml;
     opens ni.edu.uam.facturacion.model to javafx.base, javafx.fxml;
