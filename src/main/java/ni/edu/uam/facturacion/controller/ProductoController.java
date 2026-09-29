@@ -76,6 +76,9 @@ public class ProductoController {
     private Button btnQuitarImagen;
 
     @FXML
+    private Button btnEliminar;
+
+    @FXML
     private Button btnNuevo;
 
     @FXML
@@ -95,6 +98,9 @@ public class ProductoController {
         tblProductos.setItems(productos);
         tblProductos.setFixedCellSize(46.0);
         chkActivo.setSelected(true);
+        if (btnEliminar != null) {
+            btnEliminar.setDisable(true);
+        }
 
         colImagen.setCellValueFactory(new PropertyValueFactory<>("rutaImagen"));
         colImagen.setCellFactory(col -> new TableCell<>() {
@@ -190,6 +196,9 @@ public class ProductoController {
 
         rutaImagen = p.getRutaImagen();
         actualizarVistaPreviaImagen(rutaImagen);
+
+        if (btnEliminar != null) btnEliminar.setDisable(false);
+        if (btnGuardar != null) btnGuardar.setText("Actualizar");
     }
 
     private void actualizarVistaPreviaImagen(String ruta) {
@@ -288,7 +297,8 @@ public class ProductoController {
                     mensaje(Alert.AlertType.INFORMATION, "Producto actualizado correctamente en la base de datos.");
                     limpiar();
                 } else {
-                    mensaje(Alert.AlertType.ERROR, "No se pudo actualizar el producto en la base de datos.");
+                    String err = productoDAO.getUltimoError() != null ? productoDAO.getUltimoError() : "No se pudo actualizar el producto en la base de datos.";
+                    mensaje(Alert.AlertType.ERROR, err);
                 }
             } else {
                 Producto nuevo = new Producto(
@@ -307,11 +317,39 @@ public class ProductoController {
                     mensaje(Alert.AlertType.INFORMATION, "Producto guardado correctamente en la base de datos.");
                     limpiar();
                 } else {
-                    mensaje(Alert.AlertType.ERROR, "No se pudo guardar el producto en la base de datos.\nVerifique que el código no esté duplicado.");
+                    String err = productoDAO.getUltimoError() != null ? productoDAO.getUltimoError() : "No se pudo guardar el producto en la base de datos.";
+                    mensaje(Alert.AlertType.ERROR, err);
                 }
             }
         } catch (NumberFormatException e) {
             mensaje(Alert.AlertType.ERROR, "Precio o existencia no válidos.");
+        }
+    }
+
+    @FXML
+    private void eliminar() {
+        if (productoSeleccionado == null || productoSeleccionado.getId() == null) {
+            mensaje(Alert.AlertType.WARNING, "Seleccione un producto de la tabla para eliminarlo.");
+            return;
+        }
+
+        Alert confirmacion = new Alert(
+            Alert.AlertType.CONFIRMATION,
+            "¿Está seguro de que desea eliminar el producto \"" + productoSeleccionado.getNombre() + "\"?",
+            ButtonType.YES, ButtonType.NO
+        );
+        confirmacion.setTitle("Confirmar Eliminación");
+        confirmacion.setHeaderText(null);
+
+        if (confirmacion.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
+            if (productoDAO.eliminar(productoSeleccionado.getId())) {
+                cargarProductos();
+                mensaje(Alert.AlertType.INFORMATION, "Producto eliminado correctamente.");
+                limpiar();
+            } else {
+                String err = productoDAO.getUltimoError() != null ? productoDAO.getUltimoError() : "No se pudo eliminar el producto.";
+                mensaje(Alert.AlertType.ERROR, err);
+            }
         }
     }
 
@@ -345,6 +383,8 @@ public class ProductoController {
         chkActivo.setSelected(true);
         rutaImagen = null;
         actualizarVistaPreviaImagen(null);
+        if (btnEliminar != null) btnEliminar.setDisable(true);
+        if (btnGuardar != null) btnGuardar.setText("Guardar");
     }
 
     private void mensaje(Alert.AlertType tipo, String texto) {

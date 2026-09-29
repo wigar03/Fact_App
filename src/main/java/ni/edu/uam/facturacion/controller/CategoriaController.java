@@ -76,7 +76,8 @@ public class CategoriaController {
             mensaje(Alert.AlertType.INFORMATION, "Categoría agregada correctamente en la base de datos.");
             limpiar();
         } else {
-            mensaje(Alert.AlertType.ERROR, "No se pudo guardar la categoría en la base de datos.");
+            String err = categoriaDAO.getUltimoError() != null ? categoriaDAO.getUltimoError() : "No se pudo guardar la categoría en la base de datos.";
+            mensaje(Alert.AlertType.ERROR, err);
         }
     }
 

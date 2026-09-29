@@ -61,8 +61,15 @@ public class ProductoDAO implements CRUD<Producto, Integer> {
         return null;
     }
 
+    private String ultimoError;
+
+    public String getUltimoError() {
+        return ultimoError;
+    }
+
     @Override
     public boolean crear(Producto p) {
+        ultimoError = null;
         var sql = "INSERT INTO producto (codigo, nombre, categoria_id, precio_venta, existencia, ruta_imagen, activo) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
@@ -96,12 +103,25 @@ public class ProductoDAO implements CRUD<Producto, Integer> {
             return false;
         } catch (SQLException e) {
             System.err.println("Error al crear producto: " + e.getMessage());
+            if ("23505".equals(e.getSQLState())) {
+                String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+                if (msg.contains("uq_producto_nombre") || msg.contains("(nombre)")) {
+                    ultimoError = "Ya existe un producto con el nombre '" + p.getNombre() + "'.";
+                } else if (msg.contains("codigo")) {
+                    ultimoError = "Ya existe un producto con el código '" + p.getCodigo() + "'.";
+                } else {
+                    ultimoError = "Ya existe un registro con datos duplicados.";
+                }
+            } else {
+                ultimoError = "Error al crear el producto: " + e.getMessage();
+            }
             return false;
         }
     }
 
     @Override
     public boolean actualizar(Producto p) {
+        ultimoError = null;
         var sql = "UPDATE producto SET codigo = ?, nombre = ?, categoria_id = ?, precio_venta = ?, "
                 + "                   existencia = ?, ruta_imagen = ?, activo = ? "
                 + "WHERE id = ?";
@@ -128,12 +148,25 @@ public class ProductoDAO implements CRUD<Producto, Integer> {
             return filas > 0;
         } catch (SQLException e) {
             System.err.println("Error al actualizar producto: " + e.getMessage());
+            if ("23505".equals(e.getSQLState())) {
+                String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+                if (msg.contains("uq_producto_nombre") || msg.contains("(nombre)")) {
+                    ultimoError = "Ya existe un producto con el nombre '" + p.getNombre() + "'.";
+                } else if (msg.contains("codigo")) {
+                    ultimoError = "Ya existe un producto con el código '" + p.getCodigo() + "'.";
+                } else {
+                    ultimoError = "Ya existe un registro con datos duplicados.";
+                }
+            } else {
+                ultimoError = "Error al actualizar el producto: " + e.getMessage();
+            }
             return false;
         }
     }
 
     @Override
     public boolean eliminar(Integer id) {
+        ultimoError = null;
         var sql = "DELETE FROM producto WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -145,6 +178,7 @@ public class ProductoDAO implements CRUD<Producto, Integer> {
             return filas > 0;
         } catch (SQLException e) {
             System.err.println("Error al eliminar producto: " + e.getMessage());
+            ultimoError = "Error al eliminar el producto: " + e.getMessage();
             return false;
         }
     }

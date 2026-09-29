@@ -63,8 +63,15 @@ public class CategoriaDAO implements CRUD<Categoria, Integer> {
         return null;
     }
 
+    private String ultimoError;
+
+    public String getUltimoError() {
+        return ultimoError;
+    }
+
     @Override
     public boolean crear(Categoria cat) {
+        ultimoError = null;
         var sql = "INSERT INTO categoria (nombre, activa) "
                 + "VALUES (?, ?)";
 
@@ -86,12 +93,18 @@ public class CategoriaDAO implements CRUD<Categoria, Integer> {
             return false;
         } catch (SQLException e) {
             System.err.println("Error al crear categoría: " + e.getMessage());
+            if ("23505".equals(e.getSQLState())) {
+                ultimoError = "Ya existe una categoría con el nombre '" + cat.getNombre() + "'.";
+            } else {
+                ultimoError = "Error al crear la categoría: " + e.getMessage();
+            }
             return false;
         }
     }
 
     @Override
     public boolean actualizar(Categoria cat) {
+        ultimoError = null;
         var sql = "UPDATE categoria SET nombre = ?, activa = ? "
                 + "WHERE id = ?";
 
@@ -106,12 +119,18 @@ public class CategoriaDAO implements CRUD<Categoria, Integer> {
             return filas > 0;
         } catch (SQLException e) {
             System.err.println("Error al actualizar categoría: " + e.getMessage());
+            if ("23505".equals(e.getSQLState())) {
+                ultimoError = "Ya existe una categoría con el nombre '" + cat.getNombre() + "'.";
+            } else {
+                ultimoError = "Error al actualizar la categoría: " + e.getMessage();
+            }
             return false;
         }
     }
 
     @Override
     public boolean eliminar(Integer id) {
+        ultimoError = null;
         var sql = "DELETE FROM categoria WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -123,6 +142,11 @@ public class CategoriaDAO implements CRUD<Categoria, Integer> {
             return filas > 0;
         } catch (SQLException e) {
             System.err.println("Error al eliminar categoría: " + e.getMessage());
+            if ("23503".equals(e.getSQLState())) {
+                ultimoError = "No se puede eliminar la categoría porque tiene productos asignados.";
+            } else {
+                ultimoError = "Error al eliminar la categoría: " + e.getMessage();
+            }
             return false;
         }
     }
