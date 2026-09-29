@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
+import ni.edu.uam.facturacion.DAO.CategoriaDAO;
 import ni.edu.uam.facturacion.model.Categoria;
 
 public class CategoriaController {
@@ -35,20 +36,22 @@ public class CategoriaController {
     private Button btnCerrar;
 
     private final ObservableList<Categoria> categorias = FXCollections.observableArrayList();
+    private final CategoriaDAO categoriaDAO = new CategoriaDAO();
 
     @FXML
     private void initialize() {
-        categorias.addAll(
-            new Categoria(1, "Alimentos", true),
-            new Categoria(2, "Bebidas", true),
-            new Categoria(3, "Limpieza", true)
-        );
         tblCategorias.setItems(categorias);
         chkActiva.setSelected(true);
 
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         colActiva.setCellValueFactory(new PropertyValueFactory<>("activa"));
+
+        cargarCategorias();
+    }
+
+    public void cargarCategorias() {
+        categorias.setAll(categoriaDAO.findAll());
     }
 
     public ObservableList<Categoria> getCategorias() {
@@ -62,20 +65,19 @@ public class CategoriaController {
             return;
         }
 
-        int siguienteId = categorias.stream()
-            .mapToInt(c -> c.getId() != null ? c.getId() : 0)
-            .max()
-            .orElse(0) + 1;
-
         Categoria nueva = new Categoria(
-            siguienteId,
+            null,
             txtNombre.getText().trim(),
             chkActiva.isSelected()
         );
 
-        categorias.add(nueva);
-        mensaje(Alert.AlertType.INFORMATION, "Categoría agregada correctamente.");
-        limpiar();
+        if (categoriaDAO.crear(nueva)) {
+            cargarCategorias();
+            mensaje(Alert.AlertType.INFORMATION, "Categoría agregada correctamente en la base de datos.");
+            limpiar();
+        } else {
+            mensaje(Alert.AlertType.ERROR, "No se pudo guardar la categoría en la base de datos.");
+        }
     }
 
     private Runnable alCerrar;

@@ -67,7 +67,7 @@ public class ProductoDAO implements CRUD<Producto, Integer> {
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, p.getCodigo());
             stmt.setString(2, p.getNombre());
@@ -85,7 +85,15 @@ public class ProductoDAO implements CRUD<Producto, Integer> {
             stmt.setBoolean(7, p.isActivo());
 
             int filas = stmt.executeUpdate();
-            return filas > 0;
+            if (filas > 0) {
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        p.setId(rs.getInt(1));
+                    }
+                }
+                return true;
+            }
+            return false;
         } catch (SQLException e) {
             System.err.println("Error al crear producto: " + e.getMessage());
             return false;

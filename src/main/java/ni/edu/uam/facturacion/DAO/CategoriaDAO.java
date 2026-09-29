@@ -69,13 +69,21 @@ public class CategoriaDAO implements CRUD<Categoria, Integer> {
                 + "VALUES (?, ?)";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, cat.getNombre());
             stmt.setBoolean(2, cat.isActiva());
 
             int filas = stmt.executeUpdate();
-            return filas > 0;
+            if (filas > 0) {
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        cat.setId(rs.getInt(1));
+                    }
+                }
+                return true;
+            }
+            return false;
         } catch (SQLException e) {
             System.err.println("Error al crear categoría: " + e.getMessage());
             return false;

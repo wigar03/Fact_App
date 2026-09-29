@@ -9,6 +9,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import ni.edu.uam.facturacion.DAO.CategoriaDAO;
+import ni.edu.uam.facturacion.DAO.ProductoDAO;
 import ni.edu.uam.facturacion.model.Categoria;
 import ni.edu.uam.facturacion.model.Producto;
 
@@ -70,14 +72,11 @@ public class ProductoController {
 
     private final ObservableList<Producto> productos = FXCollections.observableArrayList();
     private String rutaImagen;
+    private final ProductoDAO productoDAO = new ProductoDAO();
+    private final CategoriaDAO categoriaDAO = new CategoriaDAO();
 
     @FXML
     private void initialize() {
-        cmbCategoria.setItems(FXCollections.observableArrayList(
-            new Categoria(1, "Alimentos", true),
-            new Categoria(2, "Bebidas", true),
-            new Categoria(3, "Limpieza", true)
-        ));
         tblProductos.setItems(productos);
         chkActivo.setSelected(true);
 
@@ -87,6 +86,17 @@ public class ProductoController {
         colPrecio.setCellValueFactory(new PropertyValueFactory<>("precioVenta"));
         colExistencia.setCellValueFactory(new PropertyValueFactory<>("existencia"));
         colActivo.setCellValueFactory(new PropertyValueFactory<>("activo"));
+
+        cargarCategorias();
+        cargarProductos();
+    }
+
+    public void cargarCategorias() {
+        cmbCategoria.setItems(FXCollections.observableArrayList(categoriaDAO.findAll()));
+    }
+
+    public void cargarProductos() {
+        productos.setAll(productoDAO.findAll());
     }
 
     public ObservableList<Producto> getProductos() {
@@ -112,6 +122,11 @@ public class ProductoController {
 
     @FXML
     private void guardar() {
+        if (cmbCategoria.getItems().isEmpty()) {
+            mensaje(Alert.AlertType.WARNING, "No hay categorías registradas en la base de datos.\nDebe crear al menos una categoría primero.");
+            return;
+        }
+
         if (txtCodigo.getText() == null || txtCodigo.getText().isBlank()
             || txtNombre.getText() == null || txtNombre.getText().isBlank()
             || txtPrecio.getText() == null || txtPrecio.getText().isBlank()
@@ -131,7 +146,7 @@ public class ProductoController {
                 return;
             }
 
-            productos.add(new Producto(
+            Producto nuevo = new Producto(
                 null,
                 txtCodigo.getText().trim(),
                 txtNombre.getText().trim(),
@@ -140,10 +155,15 @@ public class ProductoController {
                 existencia,
                 rutaImagen,
                 chkActivo.isSelected()
-            ));
+            );
 
-            mensaje(Alert.AlertType.INFORMATION, "Producto agregado correctamente.");
-            limpiar();
+            if (productoDAO.crear(nuevo)) {
+                cargarProductos();
+                mensaje(Alert.AlertType.INFORMATION, "Producto guardado correctamente en la base de datos.");
+                limpiar();
+            } else {
+                mensaje(Alert.AlertType.ERROR, "No se pudo guardar el producto en la base de datos.\nVerifique que el código no esté duplicado.");
+            }
         } catch (NumberFormatException e) {
             mensaje(Alert.AlertType.ERROR, "Precio o existencia no válidos.");
         }

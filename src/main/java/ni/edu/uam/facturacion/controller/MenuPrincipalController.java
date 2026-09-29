@@ -111,7 +111,12 @@ public class MenuPrincipalController {
                 vistaCategorias = loaderCat.load();
                 categoriaController = loaderCat.getController();
                 categoriaController.setAlCerrar(this::mostrarInicio);
-                categoriaController.getCategorias().addListener((ListChangeListener<Categoria>) c -> actualizarDashboard());
+                categoriaController.getCategorias().addListener((ListChangeListener<Categoria>) c -> {
+                    actualizarDashboard();
+                    if (productoController != null) {
+                        productoController.cargarCategorias();
+                    }
+                });
             }
 
             if (vistaProductos == null) {
@@ -119,9 +124,6 @@ public class MenuPrincipalController {
                 vistaProductos = loaderProd.load();
                 productoController = loaderProd.getController();
                 productoController.setAlCerrar(this::mostrarInicio);
-                if (categoriaController != null) {
-                    productoController.getCmbCategoria().setItems(categoriaController.getCategorias());
-                }
                 productoController.getProductos().addListener((ListChangeListener<Producto>) c -> actualizarDashboard());
             }
 
@@ -213,8 +215,8 @@ public class MenuPrincipalController {
                 lblDetalleCategorias.setText(nombres);
             }
         } else {
-            if (lblTotalCategorias != null) lblTotalCategorias.setText("3");
-            if (lblDetalleCategorias != null) lblDetalleCategorias.setText("Alimentos, Bebidas, Limpieza");
+            if (lblTotalCategorias != null) lblTotalCategorias.setText("0");
+            if (lblDetalleCategorias != null) lblDetalleCategorias.setText("Sin categorías registradas");
         }
 
         if (cargoController != null) {
@@ -238,6 +240,12 @@ public class MenuPrincipalController {
     @FXML
     public void mostrarInicio() {
         cargarVistas();
+        if (categoriaController != null) {
+            categoriaController.cargarCategorias();
+        }
+        if (productoController != null) {
+            productoController.cargarProductos();
+        }
         actualizarDashboard();
         rootPane.setCenter(vistaInicio);
         actualizarEstiloBotones(btnHome);
@@ -249,6 +257,10 @@ public class MenuPrincipalController {
     @FXML
     private void abrirProductos() {
         cargarVistas();
+        if (productoController != null) {
+            productoController.cargarCategorias();
+            productoController.cargarProductos();
+        }
         rootPane.setCenter(vistaProductos);
         actualizarEstiloBotones(btnProductos);
         if (lblEstado != null) {
@@ -259,6 +271,9 @@ public class MenuPrincipalController {
     @FXML
     private void abrirCategorias() {
         cargarVistas();
+        if (categoriaController != null) {
+            categoriaController.cargarCategorias();
+        }
         rootPane.setCenter(vistaCategorias);
         actualizarEstiloBotones(btnCategorias);
         if (lblEstado != null) {

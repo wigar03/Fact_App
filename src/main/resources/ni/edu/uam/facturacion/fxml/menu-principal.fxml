@@ -204,12 +204,12 @@
                                     </VBox>
                                  </children>
                               </HBox>
-                              <Label fx:id="lblTotalCategorias" text="3" textFill="#d97706">
+                              <Label fx:id="lblTotalCategorias" text="0" textFill="#d97706">
                                  <font>
                                     <Font name="System Bold" size="28.0" />
                                  </font>
                               </Label>
-                              <Label fx:id="lblDetalleCategorias" text="Alimentos, Bebidas, Limpieza" textFill="#64748b">
+                              <Label fx:id="lblDetalleCategorias" text="Sin categorías registradas" textFill="#64748b">
                                  <font>
                                     <Font size="12.0" />
                                  </font>
