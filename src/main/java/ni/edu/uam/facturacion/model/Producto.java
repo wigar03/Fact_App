@@ -15,4 +15,8 @@ public class Producto {
     private int existencia;
     private String rutaImagen;
     private boolean activo;
+
+    public Producto(Integer id, String codigo, String nombre, Categoria categoria, BigDecimal precioVenta, int existencia, boolean activo) {
+        this(id, codigo, nombre, categoria, precioVenta, existencia, null, activo);
+    }
 }
