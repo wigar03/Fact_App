@@ -1,19 +1,28 @@
 package ni.edu.uam.facturacion.controller;
 
+import javafx.animation.ScaleTransition;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import ni.edu.uam.facturacion.DAO.CategoriaDAO;
 import ni.edu.uam.facturacion.DAO.ProductoDAO;
 import ni.edu.uam.facturacion.model.Categoria;
@@ -49,6 +58,9 @@ public class ProductoController {
 
     @FXML
     private ImageView imgProducto;
+
+    @FXML
+    private StackPane paneContenedorImagen;
 
     // Botones de acción del formulario (CRUD)
     @FXML
@@ -91,6 +103,18 @@ public class ProductoController {
     // Tabla y columnas
     @FXML
     private TableView<Producto> tblProductos;
+
+    @FXML
+    private Pane paneOverlayTabla;
+
+    @FXML
+    private VBox zoomCardTabla;
+
+    @FXML
+    private ImageView imgZoomTabla;
+
+    @FXML
+    private Label lblZoomNombreTabla;
 
     @FXML
     private TableColumn<Producto, String> colImagen;
@@ -142,10 +166,12 @@ public class ProductoController {
 
         // 4. Listener de selección del TableView (Sección 9)
         tblProductos.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            ocultarZoomTabla();
             if (newVal != null) {
                 cargarDetalle(newVal);
             }
         });
+        tblProductos.setOnScroll(e -> ocultarZoomTabla());
 
         // 5. Configurar opciones de filtros (Secciones 12 y 14)
         configurarFiltros();
@@ -157,10 +183,13 @@ public class ProductoController {
         cargarCategorias();
         cargarProductos();
         actualizarVistaPreviaImagen(null);
+
+        // 8. Configurar efecto de zoom al hacer hover en la imagen del formulario
+        configurarEfectoHoverImagenFormulario();
     }
 
     private void configurarColumnasTabla() {
-        // Columna de Foto / Imagen
+        // Columna de Foto / Imagen con zoom flotante en capa superior al hacer hover
         colImagen.setCellValueFactory(new PropertyValueFactory<>("rutaImagen"));
         colImagen.setCellFactory(col -> new TableCell<>() {
             private final ImageView imageView = new ImageView();
@@ -174,7 +203,34 @@ public class ProductoController {
                 clip.setArcWidth(6);
                 clip.setArcHeight(6);
                 imageView.setClip(clip);
+
                 setAlignment(Pos.CENTER);
+                setCursor(Cursor.HAND);
+
+                // Al entrar con el mouse a la celda: solo mostrar la tarjeta de imagen ampliada si ese producto está seleccionado
+                setOnMouseEntered(e -> {
+                    if (imageView.getImage() != null && getTableRow() != null) {
+                        Producto p = getTableRow().getItem();
+                        boolean estaSeleccionado = getTableRow().isSelected()
+                                || (p != null && productoSeleccionado != null && p.getId() != null && p.getId().equals(productoSeleccionado.getId()));
+                        if (estaSeleccionado) {
+                            mostrarZoomTabla(this, p, imageView.getImage());
+                        }
+                    }
+                });
+
+                // Si se hace clic en la celda y se selecciona la fila, mostrar también el zoom
+                setOnMouseClicked(e -> {
+                    if (imageView.getImage() != null && getTableRow() != null) {
+                        Producto p = getTableRow().getItem();
+                        if (p != null) {
+                            mostrarZoomTabla(this, p, imageView.getImage());
+                        }
+                    }
+                });
+
+                // Al salir con el mouse de la celda: ocultar la tarjeta ampliada
+                setOnMouseExited(e -> ocultarZoomTabla());
             }
 
             @Override
@@ -184,7 +240,7 @@ public class ProductoController {
                     setGraphic(null);
                     setText(empty ? null : "—");
                 } else {
-                    Image img = cargarImagenSegura(ruta, 36, 36);
+                    Image img = cargarImagenSegura(ruta, 72, 72);
                     if (img != null && !img.isError()) {
                         imageView.setImage(img);
                         setGraphic(imageView);
@@ -282,6 +338,7 @@ public class ProductoController {
      * con el texto de búsqueda y los selectores de estado y categoría (Secciones 12, 13 y 14).
      */
     private void aplicarFiltros() {
+        ocultarZoomTabla();
         String busqueda = txtBuscar.getText() != null ? txtBuscar.getText().trim().toLowerCase() : "";
         String estadoSeleccionado = cmbFiltroEstado.getValue() != null ? cmbFiltroEstado.getValue() : "Todos los productos";
         Categoria categoriaSeleccionada = cmbFiltroCategoria.getValue();
@@ -593,6 +650,92 @@ public class ProductoController {
         rutaImagen = null;
         actualizarVistaPreviaImagen(null);
         actualizarEstadoBotones(false);
+
+        if (imgProducto != null) {
+            imgProducto.setScaleX(1.0);
+            imgProducto.setScaleY(1.0);
+            imgProducto.setEffect(null);
+        }
+        ocultarZoomTabla();
+    }
+
+    private void mostrarZoomTabla(TableCell<Producto, String> cell, Producto p, Image thumbnailImg) {
+        if (paneOverlayTabla == null || zoomCardTabla == null || cell == null) {
+            return;
+        }
+
+        String ruta = p != null ? p.getRutaImagen() : null;
+        Image imgGrande = (ruta != null && !ruta.isBlank()) ? cargarImagenSegura(ruta, 200, 200) : thumbnailImg;
+        if (imgGrande == null || imgGrande.isError()) {
+            return;
+        }
+
+        imgZoomTabla.setImage(imgGrande);
+        if (p != null && p.getNombre() != null) {
+            lblZoomNombreTabla.setText(p.getNombre());
+            lblZoomNombreTabla.setVisible(true);
+        } else {
+            lblZoomNombreTabla.setVisible(false);
+        }
+
+        // Posicionar en coordenadas locales de paneOverlayTabla (capa superior no recortada)
+        Point2D cellScene = cell.localToScene(0, 0);
+        Point2D local = paneOverlayTabla.sceneToLocal(cellScene);
+        if (local != null) {
+            double x = Math.max(8.0, local.getX() + cell.getWidth() + 8.0);
+            double y = Math.max(8.0, local.getY() - 45.0);
+
+            if (paneOverlayTabla.getHeight() > 0 && y + 175.0 > paneOverlayTabla.getHeight()) {
+                y = Math.max(8.0, paneOverlayTabla.getHeight() - 180.0);
+            }
+
+            zoomCardTabla.setLayoutX(x);
+            zoomCardTabla.setLayoutY(y);
+            zoomCardTabla.setVisible(true);
+
+            ScaleTransition st = new ScaleTransition(Duration.millis(120), zoomCardTabla);
+            st.setFromX(0.7);
+            st.setFromY(0.7);
+            st.setToX(1.0);
+            st.setToY(1.0);
+            st.play();
+        }
+    }
+
+    private void ocultarZoomTabla() {
+        if (zoomCardTabla != null) {
+            zoomCardTabla.setVisible(false);
+        }
+    }
+
+    private void configurarEfectoHoverImagenFormulario() {
+        if (paneContenedorImagen != null) {
+            paneContenedorImagen.setCursor(Cursor.HAND);
+
+            paneContenedorImagen.setOnMouseEntered(e -> {
+                if (productoSeleccionado != null && imgProducto != null && imgProducto.getImage() != null) {
+                    paneContenedorImagen.setViewOrder(-10.0);
+                    imgProducto.setViewOrder(-10.0);
+                    ScaleTransition st = new ScaleTransition(Duration.millis(180), imgProducto);
+                    st.setToX(1.75);
+                    st.setToY(1.75);
+                    st.play();
+                    imgProducto.setEffect(new DropShadow(18, Color.rgb(0, 0, 0, 0.45)));
+                }
+            });
+
+            paneContenedorImagen.setOnMouseExited(e -> {
+                if (imgProducto != null) {
+                    ScaleTransition st = new ScaleTransition(Duration.millis(180), imgProducto);
+                    st.setToX(1.0);
+                    st.setToY(1.0);
+                    st.play();
+                    imgProducto.setEffect(null);
+                    imgProducto.setViewOrder(0.0);
+                    paneContenedorImagen.setViewOrder(0.0);
+                }
+            });
+        }
     }
 
     @FXML
@@ -654,6 +797,7 @@ public class ProductoController {
 
     @FXML
     private void cerrar() {
+        ocultarZoomTabla();
         if (alCerrar != null) {
             alCerrar.run();
         } else {
