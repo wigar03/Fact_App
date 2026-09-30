@@ -164,7 +164,7 @@
                         <Font name="System Bold" size="12.0" />
                      </font>
                   </Label>
-                  <ComboBox fx:id="cmbFiltroEstado" prefHeight="30.0" prefWidth="160.0" promptText="Todos los productos" />
+                  <ComboBox fx:id="cmbFiltroEstado" prefHeight="30.0" prefWidth="200.0" promptText="Todos los productos" />
 
                   <Label text="Categoría:" textFill="#475569">
                      <font>
