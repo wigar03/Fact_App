@@ -1,5 +1,6 @@
 package ni.edu.uam.facturacion.controller;
 
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -18,9 +19,11 @@ import ni.edu.uam.facturacion.model.Producto;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.List;
 
 public class ProductoController {
 
+    // Controles del formulario
     @FXML
     private TextField txtCodigo;
 
@@ -45,6 +48,45 @@ public class ProductoController {
     @FXML
     private ImageView imgProducto;
 
+    // Botones de acción del formulario (CRUD)
+    @FXML
+    private Button btnGuardar;
+
+    @FXML
+    private Button btnActualizar;
+
+    @FXML
+    private Button btnEliminar;
+
+    @FXML
+    private Button btnNuevo;
+
+    @FXML
+    private Button btnCerrar;
+
+    @FXML
+    private Button btnImagen;
+
+    @FXML
+    private Button btnQuitarImagen;
+
+    // Controles de Búsqueda y Filtros
+    @FXML
+    private TextField txtBuscar;
+
+    @FXML
+    private Button btnLimpiarBusqueda;
+
+    @FXML
+    private ComboBox<String> cmbFiltroEstado;
+
+    @FXML
+    private ComboBox<Categoria> cmbFiltroCategoria;
+
+    @FXML
+    private Label lblConteoRegistros;
+
+    // Tabla y columnas
     @FXML
     private TableView<Producto> tblProductos;
 
@@ -58,7 +100,7 @@ public class ProductoController {
     private TableColumn<Producto, String> colNombre;
 
     @FXML
-    private TableColumn<Producto, Categoria> colCategoria;
+    private TableColumn<Producto, String> colCategoria;
 
     @FXML
     private TableColumn<Producto, BigDecimal> colPrecio;
@@ -69,39 +111,37 @@ public class ProductoController {
     @FXML
     private TableColumn<Producto, Boolean> colActivo;
 
-    @FXML
-    private Button btnImagen;
-
-    @FXML
-    private Button btnQuitarImagen;
-
-    @FXML
-    private Button btnEliminar;
-
-    @FXML
-    private Button btnNuevo;
-
-    @FXML
-    private Button btnGuardar;
-
-    @FXML
-    private Button btnCerrar;
-
+    // Colección observable de productos
     private final ObservableList<Producto> productos = FXCollections.observableArrayList();
+
     private String rutaImagen;
     private Producto productoSeleccionado;
     private final ProductoDAO productoDAO = new ProductoDAO();
     private final CategoriaDAO categoriaDAO = new CategoriaDAO();
+    private Runnable alCerrar;
 
     @FXML
     private void initialize() {
         tblProductos.setItems(productos);
         tblProductos.setFixedCellSize(46.0);
         chkActivo.setSelected(true);
-        if (btnEliminar != null) {
-            btnEliminar.setDisable(true);
-        }
 
+        configurarColumnasTabla();
+
+        tblProductos.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                cargarDetalle(newVal);
+            }
+        });
+
+        actualizarEstadoBotones(false);
+        cargarCategorias();
+        cargarProductos();
+        actualizarVistaPreviaImagen(null);
+    }
+
+    private void configurarColumnasTabla() {
+        // Columna de Foto / Imagen
         colImagen.setCellValueFactory(new PropertyValueFactory<>("rutaImagen"));
         colImagen.setCellFactory(col -> new TableCell<>() {
             private final ImageView imageView = new ImageView();
@@ -139,26 +179,73 @@ public class ProductoController {
             }
         });
 
+        // Columna Código
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
-        colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
-        colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
-        colPrecio.setCellValueFactory(new PropertyValueFactory<>("precioVenta"));
-        colExistencia.setCellValueFactory(new PropertyValueFactory<>("existencia"));
-        colActivo.setCellValueFactory(new PropertyValueFactory<>("activo"));
 
-        tblProductos.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                cargarDetalle(newVal);
+        // Columna Nombre
+        colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
+
+        // Columna Categoría (muestra el nombre de la categoría del objeto Categoria)
+        colCategoria.setCellValueFactory(cellData -> {
+            Categoria cat = cellData.getValue().getCategoria();
+            return new SimpleStringProperty(cat != null ? cat.getNombre() : "—");
+        });
+
+        // Columna Precio de Venta (formato moneda)
+        colPrecio.setCellValueFactory(new PropertyValueFactory<>("precioVenta"));
+        colPrecio.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(BigDecimal precio, boolean empty) {
+                super.updateItem(precio, empty);
+                if (empty || precio == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("C$ %,.2f", precio));
+                    setAlignment(Pos.CENTER_RIGHT);
+                }
             }
         });
 
-        cargarCategorias();
-        cargarProductos();
-        actualizarVistaPreviaImagen(null);
+        // Columna Existencia
+        colExistencia.setCellValueFactory(new PropertyValueFactory<>("existencia"));
+        colExistencia.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Integer existencia, boolean empty) {
+                super.updateItem(existencia, empty);
+                if (empty || existencia == null) {
+                    setText(null);
+                } else {
+                    setText(String.valueOf(existencia));
+                    setAlignment(Pos.CENTER);
+                }
+            }
+        });
+
+        // Columna Activo (badge visual de texto)
+        colActivo.setCellValueFactory(new PropertyValueFactory<>("activo"));
+        colActivo.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Boolean activo, boolean empty) {
+                super.updateItem(activo, empty);
+                if (empty || activo == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    if (activo) {
+                        setText("Activo");
+                        setStyle("-fx-text-fill: #16a34a; -fx-font-weight: bold; -fx-alignment: center;");
+                    } else {
+                        setText("Inactivo");
+                        setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold; -fx-alignment: center;");
+                    }
+                }
+            }
+        });
     }
 
     public void cargarCategorias() {
-        cmbCategoria.setItems(FXCollections.observableArrayList(categoriaDAO.findAll()));
+        List<Categoria> listaDB = categoriaDAO.findAll();
+        cmbCategoria.setItems(FXCollections.observableArrayList(listaDB));
     }
 
     public void cargarProductos() {
@@ -173,9 +260,13 @@ public class ProductoController {
         return cmbCategoria;
     }
 
+    /**
+     * Carga en el formulario los datos del producto seleccionado en la tabla (Sección 9).
+     */
     private void cargarDetalle(Producto p) {
         if (p == null) return;
         productoSeleccionado = p;
+
         txtCodigo.setText(p.getCodigo());
         txtNombre.setText(p.getNombre());
 
@@ -197,8 +288,227 @@ public class ProductoController {
         rutaImagen = p.getRutaImagen();
         actualizarVistaPreviaImagen(rutaImagen);
 
-        if (btnEliminar != null) btnEliminar.setDisable(false);
-        if (btnGuardar != null) btnGuardar.setText("Actualizar");
+        actualizarEstadoBotones(true);
+    }
+
+    private void actualizarEstadoBotones(boolean productoSeleccionado) {
+        if (btnGuardar != null) btnGuardar.setDisable(productoSeleccionado);
+        if (btnActualizar != null) btnActualizar.setDisable(!productoSeleccionado);
+        if (btnEliminar != null) btnEliminar.setDisable(!productoSeleccionado);
+    }
+
+    /**
+     * Valida exhaustivamente los datos del formulario según los requisitos de la Sección 15.
+     * @param idProductoActual null si es creación (CREATE), o el ID del producto si es actualización (UPDATE).
+     * @return El objeto Producto listo para persistir, o null si falla alguna validación.
+     */
+    private Producto validarFormulario(Integer idProductoActual) {
+        // 1. Código obligatorio
+        String codigo = txtCodigo.getText() != null ? txtCodigo.getText().trim() : "";
+        if (codigo.isEmpty()) {
+            mensaje(Alert.AlertType.WARNING, "El código es obligatorio.");
+            txtCodigo.requestFocus();
+            return null;
+        }
+
+        // 2. Nombre obligatorio
+        String nombre = txtNombre.getText() != null ? txtNombre.getText().trim() : "";
+        if (nombre.isEmpty()) {
+            mensaje(Alert.AlertType.WARNING, "El nombre es obligatorio.");
+            txtNombre.requestFocus();
+            return null;
+        }
+
+        // 3. Debe seleccionar una categoría
+        Categoria categoria = cmbCategoria.getValue();
+        if (categoria == null || categoria.getId() == null) {
+            mensaje(Alert.AlertType.WARNING, "Debe seleccionar una categoría.");
+            cmbCategoria.requestFocus();
+            return null;
+        }
+
+        // 4 y 5. El precio debe ser numérico y mayor que cero
+        String precioStr = txtPrecio.getText() != null ? txtPrecio.getText().trim() : "";
+        if (precioStr.isEmpty()) {
+            mensaje(Alert.AlertType.WARNING, "El precio es obligatorio.");
+            txtPrecio.requestFocus();
+            return null;
+        }
+        BigDecimal precio;
+        try {
+            precio = new BigDecimal(precioStr);
+        } catch (NumberFormatException e) {
+            mensaje(Alert.AlertType.WARNING, "El precio debe ser numérico.");
+            txtPrecio.requestFocus();
+            return null;
+        }
+        if (precio.compareTo(BigDecimal.ZERO) <= 0) {
+            mensaje(Alert.AlertType.WARNING, "El precio debe ser mayor que cero.");
+            txtPrecio.requestFocus();
+            return null;
+        }
+
+        // 6 y 7. La existencia debe ser un número entero y no puede ser negativa
+        String existenciaStr = txtExistencia.getText() != null ? txtExistencia.getText().trim() : "";
+        if (existenciaStr.isEmpty()) {
+            mensaje(Alert.AlertType.WARNING, "La existencia es obligatoria.");
+            txtExistencia.requestFocus();
+            return null;
+        }
+        int existencia;
+        try {
+            existencia = Integer.parseInt(existenciaStr);
+        } catch (NumberFormatException e) {
+            mensaje(Alert.AlertType.WARNING, "La existencia debe ser un número entero.");
+            txtExistencia.requestFocus();
+            return null;
+        }
+        if (existencia < 0) {
+            mensaje(Alert.AlertType.WARNING, "La existencia no puede ser negativa.");
+            txtExistencia.requestFocus();
+            return null;
+        }
+
+        // 8. No se permiten códigos duplicados
+        for (Producto prod : productos) {
+            if (prod.getCodigo() != null && prod.getCodigo().equalsIgnoreCase(codigo)) {
+                if (idProductoActual == null || !prod.getId().equals(idProductoActual)) {
+                    mensaje(Alert.AlertType.WARNING, "Ya existe un producto con el código '" + codigo + "'. No se permiten códigos duplicados.");
+                    txtCodigo.requestFocus();
+                    return null;
+                }
+            }
+        }
+
+        boolean activo = chkActivo.isSelected();
+        return new Producto(idProductoActual, codigo, nombre, categoria, precio, existencia, rutaImagen, activo);
+    }
+
+    /**
+     * Operación CREATE (Sección 8):
+     * Guarda un nuevo producto a partir de los datos del formulario.
+     */
+    @FXML
+    private void guardar() {
+        if (cmbCategoria.getItems().isEmpty()) {
+            mensaje(Alert.AlertType.WARNING, "No hay categorías registradas.\nDebe crear al menos una categoría primero.");
+            return;
+        }
+
+        Producto nuevo = validarFormulario(null);
+        if (nuevo == null) {
+            return;
+        }
+
+        if (productoDAO.crear(nuevo)) {
+            cargarProductos();
+            limpiar();
+            mensaje(Alert.AlertType.INFORMATION, "Producto registrado correctamente.");
+        } else {
+            String err = productoDAO.getUltimoError() != null ? productoDAO.getUltimoError() : "No se pudo registrar el producto en la base de datos.";
+            mensaje(Alert.AlertType.ERROR, err);
+        }
+    }
+
+    /**
+     * Operación UPDATE (Sección 10):
+     * Modifica el producto seleccionado en el TableView. No crea un nuevo registro.
+     */
+    @FXML
+    private void actualizar() {
+        if (productoSeleccionado == null || productoSeleccionado.getId() == null) {
+            mensaje(Alert.AlertType.WARNING, "Seleccione un producto en la tabla para actualizar sus datos.");
+            return;
+        }
+
+        Producto modificado = validarFormulario(productoSeleccionado.getId());
+        if (modificado == null) {
+            return;
+        }
+
+        if (productoDAO.actualizar(modificado)) {
+            cargarProductos();
+            limpiar();
+            mensaje(Alert.AlertType.INFORMATION, "Producto actualizado correctamente.");
+        } else {
+            String err = productoDAO.getUltimoError() != null ? productoDAO.getUltimoError() : "No se pudo actualizar el producto en la base de datos.";
+            mensaje(Alert.AlertType.ERROR, err);
+        }
+    }
+
+    /**
+     * Operación DELETE (Sección 11):
+     * Solicita confirmación y elimina el producto seleccionado.
+     */
+    @FXML
+    private void eliminar() {
+        if (productoSeleccionado == null || productoSeleccionado.getId() == null) {
+            mensaje(Alert.AlertType.WARNING, "Seleccione un producto en la tabla para eliminarlo.");
+            return;
+        }
+
+        Alert confirmacion = new Alert(
+            Alert.AlertType.CONFIRMATION,
+            "¿Está seguro de que desea eliminar el producto \"" + productoSeleccionado.getNombre() + "\"?",
+            ButtonType.YES, ButtonType.NO
+        );
+        confirmacion.setTitle("Confirmar Eliminación");
+        confirmacion.setHeaderText(null);
+
+        if (confirmacion.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
+            if (productoDAO.eliminar(productoSeleccionado.getId())) {
+                cargarProductos();
+                limpiar();
+                mensaje(Alert.AlertType.INFORMATION, "Producto eliminado correctamente.");
+            } else {
+                String err = productoDAO.getUltimoError() != null ? productoDAO.getUltimoError() : "No se pudo eliminar el producto.";
+                mensaje(Alert.AlertType.ERROR, err);
+            }
+        }
+    }
+
+    /**
+     * Limpia el formulario y deselecciona la tabla, dejando listos los controles para crear un nuevo producto.
+     */
+    @FXML
+    private void limpiar() {
+        productoSeleccionado = null;
+        tblProductos.getSelectionModel().clearSelection();
+        txtCodigo.clear();
+        txtNombre.clear();
+        txtPrecio.clear();
+        txtExistencia.clear();
+        cmbCategoria.getSelectionModel().clearSelection();
+        chkActivo.setSelected(true);
+        rutaImagen = null;
+        actualizarVistaPreviaImagen(null);
+        actualizarEstadoBotones(false);
+    }
+
+    @FXML
+    private void limpiarBusqueda() {
+        if (txtBuscar != null) {
+            txtBuscar.clear();
+        }
+    }
+
+    @FXML
+    private void seleccionarImagen() {
+        FileChooser chooser = new FileChooser();
+        chooser.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter("Imágenes (*.png, *.jpg, *.jpeg)", "*.png", "*.jpg", "*.jpeg")
+        );
+        File archivo = chooser.showOpenDialog(txtCodigo.getScene().getWindow());
+        if (archivo != null) {
+            rutaImagen = archivo.toURI().toString();
+            actualizarVistaPreviaImagen(rutaImagen);
+        }
+    }
+
+    @FXML
+    private void quitarImagen() {
+        rutaImagen = null;
+        actualizarVistaPreviaImagen(null);
     }
 
     private void actualizarVistaPreviaImagen(String ruta) {
@@ -235,126 +545,6 @@ public class ProductoController {
         }
     }
 
-    @FXML
-    private void seleccionarImagen() {
-        FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.jpeg")
-        );
-        File archivo = chooser.showOpenDialog(txtCodigo.getScene().getWindow());
-        if (archivo != null) {
-            rutaImagen = archivo.toURI().toString();
-            actualizarVistaPreviaImagen(rutaImagen);
-        }
-    }
-
-    @FXML
-    private void quitarImagen() {
-        rutaImagen = null;
-        actualizarVistaPreviaImagen(null);
-    }
-
-    @FXML
-    private void guardar() {
-        if (cmbCategoria.getItems().isEmpty()) {
-            mensaje(Alert.AlertType.WARNING, "No hay categorías registradas en la base de datos.\nDebe crear al menos una categoría primero.");
-            return;
-        }
-
-        if (txtCodigo.getText() == null || txtCodigo.getText().isBlank()
-            || txtNombre.getText() == null || txtNombre.getText().isBlank()
-            || txtPrecio.getText() == null || txtPrecio.getText().isBlank()
-            || txtExistencia.getText() == null || txtExistencia.getText().isBlank()
-            || cmbCategoria.getValue() == null) {
-            mensaje(Alert.AlertType.WARNING, "Complete los campos obligatorios.");
-            return;
-        }
-
-        try {
-            BigDecimal precio = new BigDecimal(txtPrecio.getText().trim());
-            int existencia = Integer.parseInt(txtExistencia.getText().trim());
-
-            if (precio.signum() <= 0 || existencia < 0) {
-                mensaje(Alert.AlertType.WARNING,
-                    "Precio mayor que cero y existencia no negativa.");
-                return;
-            }
-
-            if (productoSeleccionado != null && productoSeleccionado.getId() != null) {
-                Producto actualizado = new Producto(
-                    productoSeleccionado.getId(),
-                    txtCodigo.getText().trim(),
-                    txtNombre.getText().trim(),
-                    cmbCategoria.getValue(),
-                    precio,
-                    existencia,
-                    rutaImagen,
-                    chkActivo.isSelected()
-                );
-
-                if (productoDAO.actualizar(actualizado)) {
-                    cargarProductos();
-                    mensaje(Alert.AlertType.INFORMATION, "Producto actualizado correctamente en la base de datos.");
-                    limpiar();
-                } else {
-                    String err = productoDAO.getUltimoError() != null ? productoDAO.getUltimoError() : "No se pudo actualizar el producto en la base de datos.";
-                    mensaje(Alert.AlertType.ERROR, err);
-                }
-            } else {
-                Producto nuevo = new Producto(
-                    null,
-                    txtCodigo.getText().trim(),
-                    txtNombre.getText().trim(),
-                    cmbCategoria.getValue(),
-                    precio,
-                    existencia,
-                    rutaImagen,
-                    chkActivo.isSelected()
-                );
-
-                if (productoDAO.crear(nuevo)) {
-                    cargarProductos();
-                    mensaje(Alert.AlertType.INFORMATION, "Producto guardado correctamente en la base de datos.");
-                    limpiar();
-                } else {
-                    String err = productoDAO.getUltimoError() != null ? productoDAO.getUltimoError() : "No se pudo guardar el producto en la base de datos.";
-                    mensaje(Alert.AlertType.ERROR, err);
-                }
-            }
-        } catch (NumberFormatException e) {
-            mensaje(Alert.AlertType.ERROR, "Precio o existencia no válidos.");
-        }
-    }
-
-    @FXML
-    private void eliminar() {
-        if (productoSeleccionado == null || productoSeleccionado.getId() == null) {
-            mensaje(Alert.AlertType.WARNING, "Seleccione un producto de la tabla para eliminarlo.");
-            return;
-        }
-
-        Alert confirmacion = new Alert(
-            Alert.AlertType.CONFIRMATION,
-            "¿Está seguro de que desea eliminar el producto \"" + productoSeleccionado.getNombre() + "\"?",
-            ButtonType.YES, ButtonType.NO
-        );
-        confirmacion.setTitle("Confirmar Eliminación");
-        confirmacion.setHeaderText(null);
-
-        if (confirmacion.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
-            if (productoDAO.eliminar(productoSeleccionado.getId())) {
-                cargarProductos();
-                mensaje(Alert.AlertType.INFORMATION, "Producto eliminado correctamente.");
-                limpiar();
-            } else {
-                String err = productoDAO.getUltimoError() != null ? productoDAO.getUltimoError() : "No se pudo eliminar el producto.";
-                mensaje(Alert.AlertType.ERROR, err);
-            }
-        }
-    }
-
-    private Runnable alCerrar;
-
     public void setAlCerrar(Runnable alCerrar) {
         this.alCerrar = alCerrar;
     }
@@ -371,23 +561,9 @@ public class ProductoController {
         }
     }
 
-    @FXML
-    private void limpiar() {
-        productoSeleccionado = null;
-        tblProductos.getSelectionModel().clearSelection();
-        txtCodigo.clear();
-        txtNombre.clear();
-        txtPrecio.clear();
-        txtExistencia.clear();
-        cmbCategoria.getSelectionModel().clearSelection();
-        chkActivo.setSelected(true);
-        rutaImagen = null;
-        actualizarVistaPreviaImagen(null);
-        if (btnEliminar != null) btnEliminar.setDisable(true);
-        if (btnGuardar != null) btnGuardar.setText("Guardar");
-    }
-
     private void mensaje(Alert.AlertType tipo, String texto) {
-        new Alert(tipo, texto, ButtonType.OK).showAndWait();
+        Alert alerta = new Alert(tipo, texto, ButtonType.OK);
+        alerta.setHeaderText(null);
+        alerta.showAndWait();
     }
 }
