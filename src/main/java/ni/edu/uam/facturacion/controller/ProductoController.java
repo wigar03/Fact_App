@@ -3,6 +3,8 @@ package ni.edu.uam.facturacion.controller;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -111,9 +113,12 @@ public class ProductoController {
     @FXML
     private TableColumn<Producto, Boolean> colActivo;
 
-    // Colección observable de productos
+    // Colecciones observables (Secciones 7 y 13: ObservableList -> FilteredList -> TableView)
     private final ObservableList<Producto> productos = FXCollections.observableArrayList();
+    private FilteredList<Producto> productosFiltrados;
+    private SortedList<Producto> productosOrdenados;
 
+    private final Categoria TODAS_CATEGORIAS = new Categoria(null, "Todas las categorías", true);
     private String rutaImagen;
     private Producto productoSeleccionado;
     private final ProductoDAO productoDAO = new ProductoDAO();
@@ -122,19 +127,33 @@ public class ProductoController {
 
     @FXML
     private void initialize() {
-        tblProductos.setItems(productos);
+        // 1. Configurar la tabla y el tamaño de fila
         tblProductos.setFixedCellSize(46.0);
         chkActivo.setSelected(true);
 
+        // 2. Configuración de columnas
         configurarColumnasTabla();
 
+        // 3. Cadena de datos observables (ObservableList -> FilteredList -> SortedList -> TableView)
+        productosFiltrados = new FilteredList<>(productos, p -> true);
+        productosOrdenados = new SortedList<>(productosFiltrados);
+        productosOrdenados.comparatorProperty().bind(tblProductos.comparatorProperty());
+        tblProductos.setItems(productosOrdenados);
+
+        // 4. Listener de selección del TableView (Sección 9)
         tblProductos.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 cargarDetalle(newVal);
             }
         });
 
+        // 5. Configurar opciones de filtros (Secciones 12 y 14)
+        configurarFiltros();
+
+        // 6. Estado inicial de los botones CRUD
         actualizarEstadoBotones(false);
+
+        // 7. Cargar datos de la BD
         cargarCategorias();
         cargarProductos();
         actualizarVistaPreviaImagen(null);
@@ -243,13 +262,104 @@ public class ProductoController {
         });
     }
 
+    private void configurarFiltros() {
+        // Opciones de filtro de estado
+        cmbFiltroEstado.setItems(FXCollections.observableArrayList(
+            "Todos los productos",
+            "Productos activos",
+            "Productos inactivos"
+        ));
+        cmbFiltroEstado.setValue("Todos los productos");
+
+        // Listeners para búsqueda en vivo y filtros
+        txtBuscar.textProperty().addListener((obs, oldVal, newVal) -> aplicarFiltros());
+        cmbFiltroEstado.valueProperty().addListener((obs, oldVal, newVal) -> aplicarFiltros());
+        cmbFiltroCategoria.valueProperty().addListener((obs, oldVal, newVal) -> aplicarFiltros());
+    }
+
+    /**
+     * Aplica el predicado de filtrado a la FilteredList trabajando conjuntamente
+     * con el texto de búsqueda y los selectores de estado y categoría (Secciones 12, 13 y 14).
+     */
+    private void aplicarFiltros() {
+        String busqueda = txtBuscar.getText() != null ? txtBuscar.getText().trim().toLowerCase() : "";
+        String estadoSeleccionado = cmbFiltroEstado.getValue() != null ? cmbFiltroEstado.getValue() : "Todos los productos";
+        Categoria categoriaSeleccionada = cmbFiltroCategoria.getValue();
+
+        productosFiltrados.setPredicate(p -> {
+            if (p == null) return false;
+
+            // 1. Filtro de búsqueda (insensible a mayúsculas/minúsculas por código, nombre o categoría)
+            if (!busqueda.isEmpty()) {
+                boolean coincideCodigo = p.getCodigo() != null && p.getCodigo().toLowerCase().contains(busqueda);
+                boolean coincideNombre = p.getNombre() != null && p.getNombre().toLowerCase().contains(busqueda);
+                boolean coincideCategoria = p.getCategoria() != null && p.getCategoria().getNombre() != null
+                        && p.getCategoria().getNombre().toLowerCase().contains(busqueda);
+
+                if (!coincideCodigo && !coincideNombre && !coincideCategoria) {
+                    return false;
+                }
+            }
+
+            // 2. Filtro por estado activo / inactivo
+            if ("Productos activos".equals(estadoSeleccionado) && !p.isActivo()) {
+                return false;
+            }
+            if ("Productos inactivos".equals(estadoSeleccionado) && p.isActivo()) {
+                return false;
+            }
+
+            // 3. Filtro por categoría seleccionada
+            if (categoriaSeleccionada != null && categoriaSeleccionada.getId() != null) {
+                if (p.getCategoria() == null || !categoriaSeleccionada.getId().equals(p.getCategoria().getId())) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        actualizarConteo();
+    }
+
+    @FXML
+    private void limpiarBusqueda() {
+        txtBuscar.clear();
+    }
+
+    private void actualizarConteo() {
+        int total = productos.size();
+        int visibles = productosFiltrados != null ? productosFiltrados.size() : total;
+        if (lblConteoRegistros != null) {
+            lblConteoRegistros.setText(visibles + " de " + total + " productos");
+        }
+    }
+
     public void cargarCategorias() {
         List<Categoria> listaDB = categoriaDAO.findAll();
         cmbCategoria.setItems(FXCollections.observableArrayList(listaDB));
+
+        ObservableList<Categoria> opcionesFiltro = FXCollections.observableArrayList();
+        opcionesFiltro.add(TODAS_CATEGORIAS);
+        opcionesFiltro.addAll(listaDB);
+
+        Categoria seleccionActual = cmbFiltroCategoria.getValue();
+        cmbFiltroCategoria.setItems(opcionesFiltro);
+
+        if (seleccionActual != null && seleccionActual.getId() != null) {
+            for (Categoria c : opcionesFiltro) {
+                if (seleccionActual.getId().equals(c.getId())) {
+                    cmbFiltroCategoria.setValue(c);
+                    return;
+                }
+            }
+        }
+        cmbFiltroCategoria.setValue(TODAS_CATEGORIAS);
     }
 
     public void cargarProductos() {
         productos.setAll(productoDAO.findAll());
+        aplicarFiltros();
     }
 
     public ObservableList<Producto> getProductos() {
@@ -483,13 +593,6 @@ public class ProductoController {
         rutaImagen = null;
         actualizarVistaPreviaImagen(null);
         actualizarEstadoBotones(false);
-    }
-
-    @FXML
-    private void limpiarBusqueda() {
-        if (txtBuscar != null) {
-            txtBuscar.clear();
-        }
     }
 
     @FXML
