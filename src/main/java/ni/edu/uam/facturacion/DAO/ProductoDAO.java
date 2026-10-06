@@ -61,17 +61,68 @@ public class ProductoDAO implements CRUD<Producto, Integer> {
         return null;
     }
 
-    private String ultimoError;
+    /**
+     * Verifica si ya existe un producto con el código especificado.
+     * Sección 14 de la guía.
+     */
+    public boolean existeCodigo(String codigo) throws SQLException {
+        String sql = """
+            SELECT COUNT(*)
+            FROM producto
+            WHERE LOWER(codigo) = LOWER(?)
+            """;
 
-    public String getUltimoError() {
-        return ultimoError;
+        try (Connection cn = DatabaseConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, codigo != null ? codigo.trim() : "");
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
     }
 
-    @Override
-    public boolean crear(Producto p) {
-        ultimoError = null;
-        var sql = "INSERT INTO producto (codigo, nombre, categoria_id, precio_venta, existencia, ruta_imagen, activo) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+    /**
+     * Verifica si ya existe otro producto con el código especificado excluyendo el ID actual (para UPDATE).
+     * Secciones 14 y 19 de la guía.
+     */
+    public boolean existeCodigo(String codigo, Integer idExcluir) throws SQLException {
+        if (idExcluir == null) {
+            return existeCodigo(codigo);
+        }
+
+        String sql = """
+            SELECT COUNT(*)
+            FROM producto
+            WHERE LOWER(codigo) = LOWER(?) AND id <> ?
+            """;
+
+        try (Connection cn = DatabaseConnection.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, codigo != null ? codigo.trim() : "");
+            ps.setInt(2, idExcluir);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Registra un nuevo producto en la base de datos lanzando SQLException.
+     * Secciones 15, 16 y 18 de la guía.
+     */
+    public void guardar(Producto p) throws SQLException {
+        String sql = "INSERT INTO producto (codigo, nombre, categoria_id, precio_venta, existencia, ruta_imagen, activo) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -79,7 +130,6 @@ public class ProductoDAO implements CRUD<Producto, Integer> {
             stmt.setString(1, p.getCodigo());
             stmt.setString(2, p.getNombre());
 
-            // Manejo de llave foránea opcional o nula
             if (p.getCategoria() != null && p.getCategoria().getId() != null) {
                 stmt.setInt(3, p.getCategoria().getId());
             } else {
@@ -98,9 +148,68 @@ public class ProductoDAO implements CRUD<Producto, Integer> {
                         p.setId(rs.getInt(1));
                     }
                 }
-                return true;
             }
-            return false;
+        }
+    }
+
+    /**
+     * Actualiza un producto existente en la base de datos lanzando SQLException.
+     * Sección 19 de la guía.
+     */
+    public void actualizarProducto(Producto p) throws SQLException {
+        String sql = "UPDATE producto SET codigo = ?, nombre = ?, categoria_id = ?, precio_venta = ?, "
+                   + "                   existencia = ?, ruta_imagen = ?, activo = ? "
+                   + "WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, p.getCodigo());
+            stmt.setString(2, p.getNombre());
+
+            if (p.getCategoria() != null && p.getCategoria().getId() != null) {
+                stmt.setInt(3, p.getCategoria().getId());
+            } else {
+                stmt.setNull(3, Types.INTEGER);
+            }
+
+            stmt.setBigDecimal(4, p.getPrecioVenta());
+            stmt.setInt(5, p.getExistencia());
+            stmt.setString(6, p.getRutaImagen());
+            stmt.setBoolean(7, p.isActivo());
+            stmt.setInt(8, p.getId());
+
+            stmt.executeUpdate();
+        }
+    }
+
+    /**
+     * Elimina un producto por su identificador lanzando SQLException.
+     * Sección 20 de la guía.
+     */
+    public void eliminarProducto(Integer id) throws SQLException {
+        String sql = "DELETE FROM producto WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
+        }
+    }
+
+    private String ultimoError;
+
+    public String getUltimoError() {
+        return ultimoError;
+    }
+
+    @Override
+    public boolean crear(Producto p) {
+        ultimoError = null;
+        try {
+            guardar(p);
+            return true;
         } catch (SQLException e) {
             System.err.println("Error al crear producto: " + e.getMessage());
             if ("23505".equals(e.getSQLState())) {
@@ -122,30 +231,9 @@ public class ProductoDAO implements CRUD<Producto, Integer> {
     @Override
     public boolean actualizar(Producto p) {
         ultimoError = null;
-        var sql = "UPDATE producto SET codigo = ?, nombre = ?, categoria_id = ?, precio_venta = ?, "
-                + "                   existencia = ?, ruta_imagen = ?, activo = ? "
-                + "WHERE id = ?";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, p.getCodigo());
-            stmt.setString(2, p.getNombre());
-
-            if (p.getCategoria() != null && p.getCategoria().getId() != null) {
-                stmt.setInt(3, p.getCategoria().getId());
-            } else {
-                stmt.setNull(3, Types.INTEGER);
-            }
-
-            stmt.setBigDecimal(4, p.getPrecioVenta());
-            stmt.setInt(5, p.getExistencia());
-            stmt.setString(6, p.getRutaImagen());
-            stmt.setBoolean(7, p.isActivo());
-            stmt.setInt(8, p.getId());
-
-            int filas = stmt.executeUpdate();
-            return filas > 0;
+        try {
+            actualizarProducto(p);
+            return true;
         } catch (SQLException e) {
             System.err.println("Error al actualizar producto: " + e.getMessage());
             if ("23505".equals(e.getSQLState())) {
@@ -167,15 +255,9 @@ public class ProductoDAO implements CRUD<Producto, Integer> {
     @Override
     public boolean eliminar(Integer id) {
         ultimoError = null;
-        var sql = "DELETE FROM producto WHERE id = ?";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, id);
-
-            int filas = stmt.executeUpdate();
-            return filas > 0;
+        try {
+            eliminarProducto(id);
+            return true;
         } catch (SQLException e) {
             System.err.println("Error al eliminar producto: " + e.getMessage());
             ultimoError = "Error al eliminar el producto: " + e.getMessage();
